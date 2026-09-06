@@ -357,6 +357,14 @@ window.addEventListener("load",function(){
   }
   seedCandles();tickMarket();setInterval(tickMarket,800);
 
+  if(location.hash==="#admin"){
+    el("dash-wrap").classList.add("hidden");
+    el("admin-wrap").classList.add("hidden");
+    el("auth-wrap").classList.remove("hidden");
+    showScreen("adminlogin");
+    return;
+  }
+
   if(q){
     el("dash-wrap").classList.add("hidden");
     el("admin-wrap").classList.add("hidden");
@@ -372,14 +380,11 @@ window.addEventListener("load",function(){
     renderAdmin();
   }else if(s&&currentUser()){
     enterDash();
-  }else if(location.hash==="#admin"){
-    showScreen("adminlogin");
   }else{
     showScreen("landing");
   }
 });
 window.addEventListener("hashchange",function(){
-  if(new URLSearchParams(location.search).get("ref"))return;
   if(location.hash==="#admin"){
     el("dash-wrap").classList.add("hidden");
     el("admin-wrap").classList.add("hidden");
