@@ -275,7 +275,11 @@ function persist(u){var all=users();all[u.email]=u;saveUsers(all);}
 function planFor(amt){if(amt>=100)return{hours:240,label:"10 Days"};if(amt>=50)return{hours:72,label:"72 Hours"};return{hours:24,label:"24 Hours"};}
 function fmtLeft(ms){if(ms<=0)return"00:00:00";var s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60),sec=s%60,p=function(n){return String(n).padStart(2,"0");};return(d?d+"d ":"")+p(h)+":"+p(m)+":"+p(sec);}
 function endTrade(u){if(!u||!u.trade||u.trade.paid)return;if(Date.now()>=u.trade.end){var inv=Number(u.trade.amount)||0;u.balance=Number(u.balance||0)+inv;u.profit=Number(u.profit||0)+inv*2;u.trade.paid=true;persist(u);}}
-function refLink(){var u=currentUser();return u?location.origin+"/?ref="+encodeURIComponent(u.refCode):location.origin;}
+function refLink(){
+  var u=currentUser();
+  var path=location.pathname||"/";
+  return location.origin+path+"?ref="+encodeURIComponent(u&&u.refCode?u.refCode:"");
+}
 function copyRefLink(){navigator.clipboard.writeText(refLink());pop("Copied","");}
 function enterDash(){if(!currentUser()){logout();return;}el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.remove("hidden");drawUser();openTab("home");if(window._t)clearInterval(window._t);window._t=setInterval(function(){if(currentUser())drawUser();},1000);}
 function drawUser(){
@@ -346,17 +350,43 @@ function seedCandles(){candles=[];var p=67880,i,o,c;for(i=0;i<36;i++){o=p;c=o+(M
 function drawOHLC(box){if(!box||!candles.length)return;box.innerHTML="";var hi=Math.max.apply(null,candles.map(function(k){return k.h;}));var lo=Math.min.apply(null,candles.map(function(k){return k.l;}));var span=hi-lo||1;candles.forEach(function(k){var col=document.createElement("div");col.className="candle-col";var color=k.c>=k.o?"#3ddc84":"#ff5d6c";col.innerHTML='<div style="height:'+((hi-k.h)/span*100)+'%"></div><div class="wick" style="height:'+((k.h-k.l)/span*100)+"%;background:"+color+'"></div>';box.appendChild(col);});}
 function tickMarket(){if(!candles.length)seedCandles();var last=candles[candles.length-1];var c=last.c+(Math.random()-0.5)*5;last.c=c;last.h=Math.max(last.h,c);last.l=Math.min(last.l,c);if(Math.random()>0.65){candles.push({o:c,h:c+3,l:c-3,c:c});if(candles.length>36)candles.shift();}px=c;var pt=px.toFixed(2);if(el("home-px"))el("home-px").textContent=pt;if(el("trade-price"))el("trade-price").textContent=pt;drawOHLC(el("dash-chart"));drawOHLC(el("trade-chart"));}
 window.addEventListener("load",function(){
-var q=new URLSearchParams(location.search).get("ref");
-if(q&&el("su-ref")){el("su-ref").value=q;el("su-ref").readOnly=true;}
-seedCandles();tickMarket();setInterval(tickMarket,800);
-var s=sess();
-if(s&&s.admin){el("auth-wrap").classList.add("hidden");el("admin-wrap").classList.remove("hidden");renderAdmin();}
-else if(s&&currentUser())enterDash();
-else if(location.hash==="#admin")showScreen("adminlogin");
-else if(q)showScreen("signup");
-else showScreen("landing");
+  var q=new URLSearchParams(location.search).get("ref");
+  if(q&&el("su-ref")){
+    el("su-ref").value=q;
+    el("su-ref").readOnly=true;
+  }
+  seedCandles();tickMarket();setInterval(tickMarket,800);
+
+  if(q){
+    el("dash-wrap").classList.add("hidden");
+    el("admin-wrap").classList.add("hidden");
+    el("auth-wrap").classList.remove("hidden");
+    showScreen("signup");
+    return;
+  }
+
+  var s=sess();
+  if(s&&s.admin){
+    el("auth-wrap").classList.add("hidden");
+    el("admin-wrap").classList.remove("hidden");
+    renderAdmin();
+  }else if(s&&currentUser()){
+    enterDash();
+  }else if(location.hash==="#admin"){
+    showScreen("adminlogin");
+  }else{
+    showScreen("landing");
+  }
 });
-window.addEventListener("hashchange",function(){if(location.hash==="#admin"){el("dash-wrap").classList.add("hidden");el("admin-wrap").classList.add("hidden");el("auth-wrap").classList.remove("hidden");showScreen("adminlogin");}});
+window.addEventListener("hashchange",function(){
+  if(new URLSearchParams(location.search).get("ref"))return;
+  if(location.hash==="#admin"){
+    el("dash-wrap").classList.add("hidden");
+    el("admin-wrap").classList.add("hidden");
+    el("auth-wrap").classList.remove("hidden");
+    showScreen("adminlogin");
+  }
+});
 </script>
 </body>
 </html>
