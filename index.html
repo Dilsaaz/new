@@ -271,7 +271,29 @@ function refLink(){return location.origin+(location.pathname||"/")+"?ref="+encod
 function copyRefLink(){navigator.clipboard.writeText(refLink());pop("Copied","");}
 async function endTradeCheck(){
 if(!me)return;
-var t=await sb.from("trades").select("*").eq("user_id",me.id).eq("paid",false).maybeSingle();
+var all=await sb.from("profiles").select("id,username,email,ref_code,sponsor");
+var rows=all.data||[];
+function kids(code){
+  return rows.filter(function(p){return (p.sponsor||"").toUpperCase()===(code||"").toUpperCase();});
+}
+function walk(code,deep){
+  var out=[];
+  kids(code).forEach(function(p){
+    out.push({u:p,deep:deep});
+    out=out.concat(walk(p.ref_code,deep+1));
+  });
+  return out;
+}
+var tree=walk(me.ref_code,1);
+var direct=tree.filter(function(x){return x.deep===1;});
+var down=tree.filter(function(x){return x.deep>1;});
+var html='<div class="py-2">Direct team: '+direct.length+'</div>';
+html+='<div class="py-2">Down team: '+down.length+'</div>';
+html+='<div class="py-2">Total team: '+tree.length+'</div>';
+tree.forEach(function(x,i){
+  html+='<div class="py-2">'+(i+1)+'. '+x.u.username+' · '+(x.deep===1?'Direct':'Down L'+x.deep)+'</div>';
+});
+el("team-list").innerHTML=html||'<div class="py-2">No team yet</div>';
 if(!t.data||!t.data.ends_at)return;
 if(Date.now()>=new Date(t.data.ends_at).getTime()){
 var inv=Number(t.data.amount)||0;
