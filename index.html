@@ -317,16 +317,23 @@ var deps=await sb.from("deposits").select("*").eq("user_id",me.id).order("create
 var html="";
 if(t.data)html+='<div class="py-2">Trade $'+t.data.amount+" · "+fmtLeft(new Date(t.data.ends_at).getTime()-Date.now())+"</div>";
 (deps.data||[]).forEach(function(d){html+='<div class="py-2">Deposit $'+d.amount+" · "+(d.status==="PENDING"?spin():d.status==="REJECTED"?"Cancelled":"Successful")+"</div>";});
-el("plan-bars").innerHTML=html;
-el("dep-hist").innerHTML=(deps.data||[]).map(function(d){return '<div class="py-2">$'+d.amount+" · "+(d.status==="PENDING"?spin():d.status==="REJECTED"?"Cancelled":"Successful")+"</div>";}).join("");
+if(el("plan-bars"))el("plan-bars").innerHTML=html;
+if(el("dep-hist"))el("dep-hist").innerHTML=(deps.data||[]).map(function(d){return '<div class="py-2">$'+d.amount+" · "+(d.status==="PENDING"?spin():d.status==="REJECTED"?"Cancelled":"Successful")+"</div>";}).join("");
 var w=await sb.from("withdrawals").select("*").eq("user_id",me.id).order("created_at",{ascending:false});
-el("wd-hist").innerHTML=(w.data||[]).map(function(x){return '<div class="py-2">$'+x.amount+" · "+(x.status==="PENDING"?spin():x.status==="APPROVED"?"Approved":"Cancelled")+"</div>";}).join("");
-var tm=await sb.from("team").select("member_id").eq("sponsor_id",me.id);
-var ids=(tm.data||[]).map(function(r){return r.member_id;});
-if(ids.length){
-var mem=await sb.from("profiles").select("username,email").in("id",ids);
-el("team-list").innerHTML=(mem.data||[]).map(function(m,i){return '<div class="py-2">'+(i+1)+". "+m.username+"</div>";}).join("");
-}else el("team-list").innerHTML="";
+if(el("wd-hist"))el("wd-hist").innerHTML=(w.data||[]).map(function(x){return '<div class="py-2">$'+x.amount+" · "+(x.status==="PENDING"?spin():x.status==="APPROVED"?"Approved":"Cancelled")+"</div>";}).join("");
+var all=await sb.from("profiles").select("id,username,email,ref_code,sponsor");
+var rows=all.data||[];
+function kids(code){return rows.filter(function(p){return String(p.sponsor||"").toUpperCase()===String(code||"").toUpperCase();});}
+function walk(code,deep){var out=[];kids(code).forEach(function(p){out.push({u:p,deep:deep});out=out.concat(walk(p.ref_code,deep+1));});return out;}
+var tree=walk(me.ref_code,1);
+var direct=tree.filter(function(x){return x.deep===1;});
+var down=tree.filter(function(x){return x.deep>1;});
+var th='<div class="py-2">Direct team: '+direct.length+'</div>';
+th+='<div class="py-2">Down team: '+down.length+'</div>';
+th+='<div class="py-2">Total team: '+tree.length+'</div>';
+tree.forEach(function(x,i){th+='<div class="py-2">'+(i+1)+'. '+x.u.username+' · '+(x.deep===1?'Direct':'Down L'+x.deep)+'</div>';});
+if(el("team-list"))el("team-list").innerHTML=th;
+}
 }
 function openTab(id){["home","deposit","trade","profit","withdraw","team"].forEach(function(t){el("tab-"+t).classList.toggle("hidden",t!==id);});document.querySelectorAll(".tab-btn").forEach(function(b){var on=b.getAttribute("data-tab")===id;b.classList.toggle("gold-border",on);b.classList.toggle("text-nx-gold",on);});}
 async function submitHash(){
