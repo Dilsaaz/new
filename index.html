@@ -323,7 +323,6 @@ var amt=Number(el("tr-amt").value);
 if(!amt||amt>Number(me.balance||0)){pop("Trade","Check amount");return;}
 var plan=planFor(amt);
 var end=new Date(Date.now()+plan.hours*3600*1000).toISOString();
-await sb.from("profiles").update({balance:Number(me.balance)-amt}).eq("id",me.id);
 await sb.from("trades").insert({user_id:me.id,amount:amt,label:plan.label,ends_at:end,paid:false});
 el("tr-amt").value="";await loadMe();drawUser();pop("Trade started","$"+amt.toFixed(2));
 }
