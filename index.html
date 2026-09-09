@@ -100,7 +100,7 @@ a[href*="netlify.com"]{display:none!important}
 <div class="overflow-x-auto bg-nx-card gold-border rounded-xl"><div class="p-3 text-nx-gold">Deposits</div>
 <table class="w-full text-xs"><thead class="text-nx-gold2 border-y border-nx-line"><tr><th class="p-2 text-left">User</th><th>Amt</th><th>Hash</th><th>Status</th><th>Action</th></tr></thead><tbody id="ad-dep-rows"></tbody></table></div>
 <div class="overflow-x-auto bg-nx-card gold-border rounded-xl"><div class="p-3 text-nx-gold">Withdrawals</div>
-<table class="w-full text-xs"><thead class="text-nx-gold2 border-y border-nx-line"><tr><th class="p-2 text-left">User</th><th>Amt</th><th>Net</th><th>Status</th><th>Action</th></tr></thead><tbody id="ad-wd-rows"></tbody></table></div>
+<table class="w-full text-xs"><thead class="text-nx-gold2 border-y border-nx-line"><tr><th class="p-2 text-left">User</th><th>Amt</th><th>Net</th><th>Address</th><th>Status</th><th>Action</th></tr></thead><tbody id="ad-wd-rows"></tbody></table></div>
 </main></div>
 <div id="dash-wrap" class="hidden min-h-screen">
 <header class="border-b border-nx-line px-4 py-3 flex justify-between">
@@ -209,8 +209,7 @@ var refIn=(el("su-ref").value||"").trim().toUpperCase();
 if(!username||!email||!phone||!password){pop("Required","Fill all fields");return;}
 if(password.length<6){pop("Error","Password min 6 characters");return;}
 pending={mode:"join",username:username,email:email,phone:phone,password:password,refIn:refIn,otp:otpCode()};
-el("otp-mail").textContent=email;
-popSpin();
+el("otp-mail").textContent=email;popSpin();
 try{await sendMail(email,pending.otp,username);closePop();el("otp-hint").classList.add("hidden");}
 catch(e){closePop();el("otp-hint").textContent="Temporary OTP: "+pending.otp;el("otp-hint").classList.remove("hidden");}
 showScreen("otp");
@@ -232,19 +231,16 @@ if(sp.data)await sb.from("team").insert({sponsor_id:sp.data.id,member_id:uid});
 pending=null;closePop();await loadMe();enterDash();
 }
 async function doLogin(){
-var q=el("li-user").value.trim();
-var pass=el("li-pass").value;
+var q=el("li-user").value.trim();var pass=el("li-pass").value;
 if(!q||!pass){pop("Error","Enter username and password");return;}
-popSpin();
-var email=q;
+popSpin();var email=q;
 if(q.indexOf("@")<0){
 var p=await sb.from("profiles").select("email").eq("username",q).maybeSingle();
 if(!p.data){closePop();pop("Error","User not found");return;}
 email=p.data.email;
 }
 var res=await sb.auth.signInWithPassword({email:email,password:pass});
-closePop();
-if(res.error){pop("Error",res.error.message);return;}
+closePop();if(res.error){pop("Error",res.error.message);return;}
 await loadMe();enterDash();
 }
 async function loadMe(){
@@ -274,8 +270,7 @@ if(!me)return;
 var t=await sb.from("trades").select("*").eq("user_id",me.id).eq("paid",false).maybeSingle();
 if(!t.data||!t.data.ends_at)return;
 if(Date.now()>=new Date(t.data.ends_at).getTime()){
-var inv=Number(t.data.amount)||0;
-var twox=+(inv*2).toFixed(2);
+var inv=Number(t.data.amount)||0;var twox=+(inv*2).toFixed(2);
 await sb.from("trades").update({paid:true}).eq("id",t.data.id);
 await sb.from("profiles").update({balance:Number(me.balance||0)+twox,profit:Number(me.profit||0)+twox}).eq("id",me.id);
 await loadMe();
@@ -330,8 +325,7 @@ var plan=planFor(amt);
 var end=new Date(Date.now()+plan.hours*3600*1000).toISOString();
 await sb.from("profiles").update({balance:Number(me.balance)-amt}).eq("id",me.id);
 await sb.from("trades").insert({user_id:me.id,amount:amt,label:plan.label,ends_at:end,paid:false});
-el("tr-amt").value="";
-await loadMe();drawUser();pop("Trade started","$"+amt.toFixed(2));
+el("tr-amt").value="";await loadMe();drawUser();pop("Trade started","$"+amt.toFixed(2));
 }
 async function saveAddr(){
 if(!me)return;
@@ -367,9 +361,10 @@ return '<tr class="border-b border-nx-line/40"><td class="p-2">'+name+'</td><td 
 var wds=await sb.from("withdrawals").select("*,profiles(username)").order("created_at",{ascending:false});
 el("ad-wd-rows").innerHTML=(wds.data||[]).map(function(w){
 var name=(w.profiles&&w.profiles.username)||"-";
+var addr=w.address||"";
 var act=w.status==="PENDING"?'<button type="button" onclick="adminWd(\''+w.id+'\',\''+w.user_id+'\','+w.amount+',\'APPROVED\')" class="text-emerald-400">Approve</button> <button type="button" onclick="adminWd(\''+w.id+'\',\''+w.user_id+'\','+w.amount+',\'REJECTED\')" class="text-red-400">Reject</button>':"—";
-return '<tr class="border-b border-nx-line/40"><td class="p-2">'+name+'</td><td class="p-2">$'+w.amount+'</td><td class="p-2">$'+(w.net||0)+'</td><td class="p-2">'+w.status+'</td><td class="p-2">'+act+"</td></tr>";
-}).join("")||'<tr><td class="p-3" colspan="5">No withdrawals</td></tr>';
+return '<tr class="border-b border-nx-line/40"><td class="p-2">'+name+'</td><td class="p-2">$'+w.amount+'</td><td class="p-2">$'+(w.net||0)+'</td><td class="p-2 break-all">'+addr+' <button type="button" onclick="navigator.clipboard.writeText(\''+addr+'\')" class="text-nx-gold">Copy</button></td><td class="p-2">'+w.status+'</td><td class="p-2">'+act+"</td></tr>";
+}).join("")||'<tr><td class="p-3" colspan="6">No withdrawals</td></tr>';
 }
 async function adminDep(id,uid,amt,st){
 var cur=await sb.from("deposits").select("status").eq("id",id).maybeSingle();
