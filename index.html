@@ -127,8 +127,13 @@ a[href*="netlify.com"]{display:none!important}
 <div id="plan-bars" class="text-xs mt-3"></div>
 </div>
 <div class="bg-nx-card gold-border rounded-xl p-4">
+<div class="serif text-nx-gold mb-2">Investment Packages</div>
+<div id="pkg-box" class="grid grid-cols-2 gap-2 text-xs"></div>
+<p class="text-[10px] mt-2 text-amber-100/60">Trade only the package your wallet unlocks.</p>
+</div>
+<div class="bg-nx-card gold-border rounded-xl p-4">
 <div class="text-nx-gold serif mb-2">Trade</div>
-<input id="tr-amt" type="number" class="w-full rounded-lg px-3 py-2 mb-3" placeholder="Amount from wallet"/>
+<input id="tr-amt" type="number" class="w-full rounded-lg px-3 py-2 mb-3" placeholder="Package amount"/>
 <div class="text-xs mb-3">Timer: <span id="trade-left" class="text-nx-gold">—</span></div>
 <button type="button" onclick="startTrade()" class="w-full bg-nx-gold text-nx-bg font-semibold py-3 rounded-full">Trade</button>
 </div>
@@ -304,6 +309,9 @@ var htmlT='<div class="py-2">Direct: '+tree.filter(function(x){return x.deep===1
 htmlT+='<div class="py-2">Down: '+tree.filter(function(x){return x.deep>1;}).length+'</div>';
 tree.forEach(function(x,i){htmlT+='<div class="py-2">'+(i+1)+'. '+x.u.username+' · '+(x.deep===1?'Direct':'Down L'+x.deep)+'</div>';});
 el("team-list").innerHTML=htmlT;
+var packs=[20,50,100,500,1000,5000,10000,250000,500000];
+var bal=Number(me.balance||0);
+if(el("pkg-box"))el("pkg-box").innerHTML=packs.map(function(p){var on=bal>=p;return '<button type="button" '+(on?'onclick="el(\'tr-amt\').value='+p+'"':'disabled')+' class="rounded-lg px-2 py-2 '+(on?'gold-border text-nx-gold':'opacity-40 border border-nx-line')+'">$'+p+(on?' · Open':' · Locked')+'</button>';}).join("");
 }
 function openTab(id){["home","deposit","trade","profit","withdraw","team"].forEach(function(t){el("tab-"+t).classList.toggle("hidden",t!==id);});document.querySelectorAll(".tab-btn").forEach(function(b){var on=b.getAttribute("data-tab")===id;b.classList.toggle("gold-border",on);b.classList.toggle("text-nx-gold",on);});}
 async function submitHash(){
@@ -319,12 +327,15 @@ async function startTrade(){
 if(!me)return;
 var open=await sb.from("trades").select("id").eq("user_id",me.id).eq("paid",false).maybeSingle();
 if(open.data){pop("Trade","Already running");return;}
+var packs=[20,50,100,500,1000,5000,10000,250000,500000];
 var amt=Number(el("tr-amt").value);
-if(!amt||amt>Number(me.balance||0)){pop("Trade","Check amount");return;}
+var bal=Number(me.balance||0);
+if(packs.indexOf(amt)<0){pop("Package","Use a package amount only");return;}
+if(bal<amt){pop("Package","Wallet too low");return;}
 var plan=planFor(amt);
 var end=new Date(Date.now()+plan.hours*3600*1000).toISOString();
 await sb.from("trades").insert({user_id:me.id,amount:amt,label:plan.label,ends_at:end,paid:false});
-el("tr-amt").value="";await loadMe();drawUser();pop("Trade started","$"+amt.toFixed(2));
+el("tr-amt").value="";await loadMe();drawUser();pop("Trade started","$"+amt+" package");
 }
 async function saveAddr(){
 if(!me)return;
