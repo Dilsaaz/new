@@ -352,6 +352,9 @@ if(!amt||amt>Number(me.balance||0)){pop("Error","Check amount");return;}
 var fee=+(amt*0.05).toFixed(2),net=+(amt*0.95).toFixed(2);
 await sb.from("profiles").update({balance:Number(me.balance)-amt}).eq("id",me.id);
 await sb.from("withdrawals").insert({user_id:me.id,amount:amt,fee:fee,net:net,address:me.wd_address,status:"PENDING"});
+  354  await sb.from("withdrawals").insert...
+355  await loadMe();drawUser();popSpin();
+356  }
 await loadMe();drawUser();popSpin();
 }
 async function renderAdmin(){
