@@ -263,7 +263,8 @@ isAdmin=true;el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.a
 function enterDash(){
 if(!me){logout();return;}
 el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.remove("hidden");
-drawUser();openTab("home");
+drawUser();openTab("home");pop("Notice","Withdraw time: 12 hours");
+setTimeout(closePop,5000);
 if(window._t)clearInterval(window._t);
 window._t=setInterval(function(){drawUser();},1000);
 }
