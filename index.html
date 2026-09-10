@@ -117,6 +117,7 @@ a[href*="netlify.com"]{display:none!important}
 </nav>
 <main class="max-w-5xl mx-auto p-4 space-y-4">
 <section id="tab-home">
+<div id="quota-msg" class="bg-nx-card gold-border rounded-xl p-3 text-xs mb-3"></div>
 <div class="grid grid-cols-2 gap-3">
 <div class="bg-nx-card gold-border rounded-xl p-4"><div class="text-[11px] text-nx-gold2">WALLET</div><div class="serif text-2xl text-nx-gold">$<span id="bal">0.00</span></div></div>
 <div class="bg-nx-card gold-border rounded-xl p-4"><div class="text-[11px] text-nx-gold2">PROFIT</div><div class="serif text-2xl text-nx-gold">$<span id="profit-home">0.00</span></div></div>
@@ -187,7 +188,6 @@ a[href*="netlify.com"]{display:none!important}
 <button type="button" onclick="closePop()" class="mt-5 bg-nx-gold text-nx-bg px-6 py-2 rounded-full">OK</button>
 </div></div>
 <script>
-<script>
 var SB_URL="https://adpubgmpuyqobsvftmou.supabase.co";
 var SB_KEY="sb_publishable_fuMzGvpfVnCbcA0I-z_YMg_Git9i0m0";
 var sb=supabase.createClient(SB_URL,SB_KEY);
@@ -207,7 +207,11 @@ if(!window.emailjs)return Promise.reject("no");
 return emailjs.send(EJ_SVC,EJ_TPL,{to_email:email,otp_code:code,user_name:name||"User",message:"OTP "+code});
 }
 async function sendJoinOtp(){
-var username=el("su-user").value.trim(),email=el("su-email").value.trim().toLowerCase(),phone=el("su-phone").value.trim(),password=el("su-pass").value,refIn=(el("su-ref").value||"").trim().toUpperCase();
+var username=el("su-user").value.trim();
+var email=el("su-email").value.trim().toLowerCase();
+var phone=el("su-phone").value.trim();
+var password=el("su-pass").value;
+var refIn=(el("su-ref").value||"").trim().toUpperCase();
 if(!username||!email||!phone||!password){pop("Required","Fill all fields");return;}
 if(password.length<6){pop("Error","Password min 6 characters");return;}
 pending={mode:"join",username:username,email:email,phone:phone,password:password,refIn:refIn,otp:otpCode()};
@@ -226,22 +230,43 @@ if(!uid){closePop();pop("Error","Signup failed");return;}
 var code="NV-"+pending.username.toUpperCase().replace(/\s+/g,"").slice(0,8);
 var ins=await sb.from("profiles").insert({id:uid,username:pending.username,email:pending.email,phone:pending.phone,ref_code:code,sponsor:pending.refIn||"",balance:0,profit:0,ref_bonus:0,wd_address:""});
 if(ins.error){closePop();pop("Error",ins.error.message);return;}
-if(pending.refIn){var sp=await sb.from("profiles").select("id").eq("ref_code",pending.refIn).maybeSingle();if(sp.data)await sb.from("team").insert({sponsor_id:sp.data.id,member_id:uid});}
+if(pending.refIn){
+var sp=await sb.from("profiles").select("id").eq("ref_code",pending.refIn).maybeSingle();
+if(sp.data)await sb.from("team").insert({sponsor_id:sp.data.id,member_id:uid});
+}
 pending=null;closePop();await loadMe();enterDash();
 }
 async function doLogin(){
-var q=el("li-user").value.trim(),pass=el("li-pass").value;
+var q=el("li-user").value.trim();var pass=el("li-pass").value;
 if(!q||!pass){pop("Error","Enter username and password");return;}
 popSpin();var email=q;
-if(q.indexOf("@")<0){var p=await sb.from("profiles").select("email").eq("username",q).maybeSingle();if(!p.data){closePop();pop("Error","User not found");return;}email=p.data.email;}
+if(q.indexOf("@")<0){
+var p=await sb.from("profiles").select("email").eq("username",q).maybeSingle();
+if(!p.data){closePop();pop("Error","User not found");return;}
+email=p.data.email;
+}
 var res=await sb.auth.signInWithPassword({email:email,password:pass});
 closePop();if(res.error){pop("Error",res.error.message);return;}
 await loadMe();enterDash();
 }
-async function loadMe(){var s=await sb.auth.getUser();if(!s.data.user){me=null;return null;}var p=await sb.from("profiles").select("*").eq("id",s.data.user.id).maybeSingle();me=p.data||null;return me;}
+async function loadMe(){
+var s=await sb.auth.getUser();
+if(!s.data.user){me=null;return null;}
+var p=await sb.from("profiles").select("*").eq("id",s.data.user.id).maybeSingle();
+me=p.data||null;return me;
+}
 function logout(){sb.auth.signOut();me=null;isAdmin=false;el("dash-wrap").classList.add("hidden");el("admin-wrap").classList.add("hidden");el("auth-wrap").classList.remove("hidden");showScreen("landing");}
-function adminLogin(){if(el("ad-id").value.trim()!==ADMIN_ID||el("ad-pass").value!==ADMIN_PASS){pop("Error","Wrong admin");return;}isAdmin=true;el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.add("hidden");el("admin-wrap").classList.remove("hidden");renderAdmin();}
-function enterDash(){if(!me){logout();return;}el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.remove("hidden");drawUser();openTab("home");if(window._t)clearInterval(window._t);window._t=setInterval(function(){drawUser();},1000);}
+function adminLogin(){
+if(el("ad-id").value.trim()!==ADMIN_ID||el("ad-pass").value!==ADMIN_PASS){pop("Error","Wrong admin");return;}
+isAdmin=true;el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.add("hidden");el("admin-wrap").classList.remove("hidden");renderAdmin();
+}
+function enterDash(){
+if(!me){logout();return;}
+el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.remove("hidden");
+drawUser();openTab("home");
+if(window._t)clearInterval(window._t);
+window._t=setInterval(function(){drawUser();},1000);
+}
 function planFor(amt){if(amt>=100)return{hours:240,label:"10 Days"};if(amt>=50)return{hours:72,label:"72 Hours"};return{hours:24,label:"24 Hours"};}
 function fmtLeft(ms){if(ms<=0)return"00:00:00";var s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60),sec=s%60,p=function(n){return String(n).padStart(2,"0");};return(d?d+"d ":"")+p(h)+":"+p(m)+":"+p(sec);}
 function refLink(){return location.origin+(location.pathname||"/")+"?ref="+encodeURIComponent(me&&me.ref_code?me.ref_code:"");}
@@ -288,6 +313,8 @@ el("team-list").innerHTML=htmlT;
 var packs=[20,50,100,500,1000,5000,10000,250000,500000];
 var bal=Number(me.balance||0);
 if(el("pkg-box"))el("pkg-box").innerHTML=packs.map(function(p){var on=bal>=p;return '<button type="button" '+(on?'onclick="el(\'tr-amt\').value='+p+'"':'disabled')+' class="rounded-lg px-2 py-2 '+(on?'gold-border text-nx-gold':'opacity-40 border border-nx-line')+'">$'+p+(on?' · Open':' · Locked')+'</button>';}).join("");
+var q=await quota();
+if(el("quota-msg"))el("quota-msg").innerHTML="Package $"+q.pkg+" · Withdraws "+q.used+"/"+q.cap+" · Team "+q.team+(q.used>=q.cap?" · Limit reached. Next package required.":" · Left "+(q.cap-q.used));
 }
 function openTab(id){["home","deposit","trade","profit","withdraw","team"].forEach(function(t){el("tab-"+t).classList.toggle("hidden",t!==id);});document.querySelectorAll(".tab-btn").forEach(function(b){var on=b.getAttribute("data-tab")===id;b.classList.toggle("gold-border",on);b.classList.toggle("text-nx-gold",on);});}
 async function submitHash(){
@@ -307,7 +334,8 @@ var all=await sb.from("profiles").select("id,username,ref_code,sponsor");
 var rows=all.data||[];
 function kids(code){return rows.filter(function(p){return String(p.sponsor||"").toUpperCase()===String(code||"").toUpperCase();});}
 function walk(code,deep){var out=[];kids(code).forEach(function(p){out.push(1);if(deep<3)out=out.concat(walk(p.ref_code,deep+1));});return out;}
-var team=walk(me.ref_code,1).length,cap=teamCap(team);
+var team=walk(me.ref_code,1).length;
+var cap=teamCap(team);
 var last=await sb.from("trades").select("amount").eq("user_id",me.id).order("ends_at",{ascending:false}).limit(1).maybeSingle();
 var pkg=pkgOf(last.data?last.data.amount:20);
 var wds=await sb.from("withdrawals").select("amount,status").eq("user_id",me.id);
@@ -324,7 +352,8 @@ if(packs.indexOf(amt)<0){pop("Package","Use a package amount only");return;}
 if(bal<amt){pop("Package","Wallet too low");return;}
 var q=await quota();
 if(q.used>=q.cap&&amt<=q.pkg){pop("Limit","Quota "+q.used+"/"+q.cap+" on $"+q.pkg+". Take next package");return;}
-var plan=planFor(amt),end=new Date(Date.now()+plan.hours*3600*1000).toISOString();
+var plan=planFor(amt);
+var end=new Date(Date.now()+plan.hours*3600*1000).toISOString();
 await sb.from("trades").insert({user_id:me.id,amount:amt,label:plan.label,ends_at:end,paid:false});
 el("tr-amt").value="";await loadMe();drawUser();pop("Trade started","$"+amt+" package");
 }
@@ -373,14 +402,18 @@ var cur=await sb.from("deposits").select("status").eq("id",id).maybeSingle();
 if(cur.data&&cur.data.status!=="PENDING"){renderAdmin();return;}
 await sb.from("deposits").update({status:st}).eq("id",id);
 if(st==="APPROVED"){
-var add=Number(amt)||0,p=await sb.from("profiles").select("balance,sponsor").eq("id",uid).maybeSingle();
+var add=Number(amt)||0;
+var p=await sb.from("profiles").select("balance,sponsor").eq("id",uid).maybeSingle();
 if(p.data){
 await sb.from("profiles").update({balance:Number(p.data.balance||0)+add}).eq("id",uid);
 var code=(p.data.sponsor||"").trim().toUpperCase();
 if(code){
 var sp=await sb.from("profiles").select("id,balance,ref_bonus").eq("ref_code",code).maybeSingle();
 if(!sp.data)sp=await sb.from("profiles").select("id,balance,ref_bonus").ilike("ref_code",code).maybeSingle();
-if(sp.data&&sp.data.id!==uid){var b=+(add*0.05).toFixed(2);await sb.from("profiles").update({balance:Number(sp.data.balance||0)+b,ref_bonus:Number(sp.data.ref_bonus||0)+b}).eq("id",sp.data.id);}
+if(sp.data&&sp.data.id!==uid){
+var b=+(add*0.05).toFixed(2);
+await sb.from("profiles").update({balance:Number(sp.data.balance||0)+b,ref_bonus:Number(sp.data.ref_bonus||0)+b}).eq("id",sp.data.id);
+}
 }
 }
 }
@@ -388,7 +421,10 @@ renderAdmin();
 }
 async function adminWd(id,uid,amt,st){
 await sb.from("withdrawals").update({status:st}).eq("id",id);
-if(st==="REJECTED"){var p=await sb.from("profiles").select("balance").eq("id",uid).maybeSingle();if(p.data)await sb.from("profiles").update({balance:Number(p.data.balance||0)+Number(amt)}).eq("id",uid);}
+if(st==="REJECTED"){
+var p=await sb.from("profiles").select("balance").eq("id",uid).maybeSingle();
+if(p.data)await sb.from("profiles").update({balance:Number(p.data.balance||0)+Number(amt)}).eq("id",uid);
+}
 renderAdmin();
 }
 function seedCandles(){candles=[];var p=67880,i,o,c;for(i=0;i<36;i++){o=p;c=o+(Math.random()-0.48)*24;candles.push({o:o,h:Math.max(o,c)+8,l:Math.min(o,c)-8,c:c});p=c;}px=p;}
