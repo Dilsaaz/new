@@ -309,7 +309,7 @@ function walk(code,deep){var out=[];kids(code).forEach(function(p){out.push({u:p
 var tree=walk(me.ref_code,1);
 var htmlT='<div class="py-2">Direct: '+tree.filter(function(x){return x.deep===1;}).length+'</div>';
 htmlT+='<div class="py-2">Down: '+tree.filter(function(x){return x.deep>1;}).length+'</div>';
-tree.forEach(function(x,i){htmlT+='<div class="py-2">'+(i+1)+'. '+x.u.username+' · '+(x.deep===1?'Direct':'Down L'+x.deep)+'</div>';});
+tree.forEach(function(x,i){htmlT+='<div class="py-2">'+(i+1)+'. '+x.u.username+' · '+(x.deep===1?'Direct':'Down L'+x.deep)+' · Start $'+(Number(x.u.start_pkg||0))+'</div>';});
 el("team-list").innerHTML=htmlT;
 var packs=[20,50,100,500,1000,5000,10000,250000,500000];
 var bal=Number(me.balance||0);
