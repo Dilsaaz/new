@@ -304,6 +304,8 @@ var w=await sb.from("withdrawals").select("*").eq("user_id",me.id).order("create
 el("wd-hist").innerHTML=(w.data||[]).map(function(x){return '<div class="py-2">$'+x.amount+" · "+(x.status==="PENDING"?spin():x.status==="APPROVED"?"Approved":"Cancelled")+"</div>";}).join("");
 var all=await sb.from("profiles").select("id,username,ref_code,sponsor,start_pkg");
 var rows=all.data||[];
+  var depAll=await sb.from("deposits").select("user_id,amount,created_at,status");
+function startPkg(uid){var a=(depAll.data||[]).filter(function(d){return d.user_id===uid&&String(d.status).toUpperCase()==="APPROVED";});if(!a.length)return 0;a.sort(function(p,q){return new Date(p.created_at)-new Date(q.created_at);});return Number(a[0].amount||0);}
 function kids(code){return rows.filter(function(p){return String(p.sponsor||"").toUpperCase()===String(code||"").toUpperCase();});}
 function walk(code,deep){var out=[];kids(code).forEach(function(p){out.push({u:p,deep:deep});out=out.concat(walk(p.ref_code,deep+1));});return out;}
 var tree=walk(me.ref_code,1);
