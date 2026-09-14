@@ -309,9 +309,21 @@ function startPkg(uid){var a=(depAll.data||[]).filter(function(d){return d.user_
 function kids(code){return rows.filter(function(p){return String(p.sponsor||"").toUpperCase()===String(code||"").toUpperCase();});}
 function walk(code,deep){var out=[];kids(code).forEach(function(p){out.push({u:p,deep:deep});out=out.concat(walk(p.ref_code,deep+1));});return out;}
 var tree=walk(me.ref_code,1);
-var htmlT='<div class="py-2">Direct: '+tree.filter(function(x){return x.deep===1;}).length+'</div>';
-htmlT+='<div class="py-2">Down: '+tree.filter(function(x){return x.deep>1;}).length+'</div>';
-tree.forEach(function(x,i){htmlT+='<div class="py-2">'+(i+1)+'. '+x.u.username+' · '+(x.deep===1?'Direct':'Down L'+x.deep)+' · Start $'+(Number(x.u.start_pkg||0))+'</div>';});
+var nTeam=tree.length;
+var nDir=tree.filter(function(x){return x.deep===1;}).length;
+var steps=[{m:5,b:20},{m:15,b:80},{m:40,b:150},{m:100,b:250},{m:500,b:450}];
+var next=null;
+for(var si=0;si<steps.length;si++){if(nTeam<steps[si].m){next=steps[si];break;}}
+var done=steps.filter(function(s){return nTeam>=s.m;});
+var bar=next?Math.min(100,Math.round(nTeam/next.m*100)):100;
+var htmlT='<div class="gold-border rounded-xl p-3 mb-3"><div class="text-xs opacity-70">Total team '+nTeam+' · Direct '+nDir+'</div><div class="mt-2 h-2 rounded overflow-hidden" style="background:#0a1c12"><div style="width:'+bar+'%;height:100%;background:#3ddc84"></div></div>';
+done.forEach(function(s){htmlT+='<div class="text-xs mt-1" style="color:#3ddc84">$'+s.b+' bonus · achieved</div>';});
+if(next)htmlT+='<div class="text-xs mt-1">Next $'+next.b+' · need '+(next.m-nTeam)+' more · '+nTeam+'/'+next.m+'</div>';
+htmlT+='</div><div class="gold-border rounded-xl p-3 mb-3"><div class="text-sm mb-2">Direct</div>';
+tree.filter(function(x){return x.deep===1;}).forEach(function(x,i){htmlT+='<div class="py-2">'+(i+1)+'. '+x.u.username+' · Start $'+(Number((x.u.start_pkg!=null?x.u.start_pkg:startPkg(x.u.id))||0))+'</div>';});
+htmlT+='</div><div class="gold-border rounded-xl p-3"><div class="text-sm mb-2">Down team</div>';
+tree.filter(function(x){return x.deep>1;}).forEach(function(x,i){htmlT+='<div class="py-2">'+(i+1)+'. '+x.u.username+' · Down L'+x.deep+' · Start $'+(Number((x.u.start_pkg!=null?x.u.start_pkg:startPkg(x.u.id))||0))+'</div>';});
+htmlT+='</div>';
 el("team-list").innerHTML=htmlT;
 var packs=[20,50,100,500,1000,5000,10000,250000,500000];
 var bal=Number(me.balance||0);
