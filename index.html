@@ -377,7 +377,7 @@ if(q.used>=q.cap){pop("Limit","Withdraw limit "+q.cap+" on $"+q.pkg+" package. T
 var fee=+(amt*0.05).toFixed(2),net=+(amt*0.95).toFixed(2);
 await sb.from("profiles").update({balance:Number(me.balance)-amt}).eq("id",me.id);
 var w=await sb.from("withdrawals").insert({user_id:me.id,amount:amt,fee:fee,net:net,address:me.wd_address,status:"PENDING"});
-if(w.error){await sb.from("profiles").update({balance:Number(me.balance||0)}).eq("id",me.id);pop("Notice","Withdraw locked. One team ID must be $50.");return;}
+if(w.error){await sb.from("profiles").update({balance:Number(me.balance||0)}).eq("id",me.id);pop("Notice",w.error.message||"Withdraw blocked");return;}
 try{emailjs.send(EJ_SVC,EJ_TPL,{to_email:"nexoratrade327@gmail.com",user_name:(me.username||"User"),otp_code:"WD",message:"WITHDRAW "+(me.username||"")+" $"+amt+" net $"+net+" "+(me.wd_address||"")});}catch(e){}
 await loadMe();drawUser();pop("Notice","Withdraw submitted. Time 12 to 15 hours. Status: Pending.");
 }
