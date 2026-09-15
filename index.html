@@ -319,9 +319,9 @@ var htmlT='<div class="gold-border rounded-xl p-3 mb-3"><div class="text-xs opac
 done.forEach(function(s){htmlT+='<div class="text-xs mt-1" style="color:#3ddc84">$'+s.b+' bonus · achieved</div>';});
 if(next)htmlT+='<div class="text-xs mt-1">Next $'+next.b+' · need '+(next.m-nTeam)+' more · '+nTeam+'/'+next.m+'</div>';
 htmlT+='</div><div class="gold-border rounded-xl p-3 mb-3"><div class="text-sm mb-2">Direct</div>';
-tree.filter(function(x){return x.deep===1;}).forEach(function(x,i){htmlT+='<div class="py-2">'+(i+1)+'. '+x.u.username+' · Start $'+(Number((x.u.start_pkg!=null?x.u.start_pkg:startPkg(x.u.id))||0))+'</div>';});
+tree.filter(function(x){return x.deep===1&&Number(x.u.start_pkg||0)>0;})
 htmlT+='</div><div class="gold-border rounded-xl p-3"><div class="text-sm mb-2">Down team</div>';
-tree.filter(function(x){return x.deep>1;}).forEach(function(x,i){htmlT+='<div class="py-2">'+(i+1)+'. '+x.u.username+' · Down L'+x.deep+' · Start $'+(Number((x.u.start_pkg!=null?x.u.start_pkg:startPkg(x.u.id))||0))+'</div>';});
+tree.filter(function(x){return x.deep>1&&Number(x.u.start_pkg||0)>0;})
 htmlT+='</div>';
 el("team-list").innerHTML=htmlT;
 var packs=[20,50,100,500,1000,5000,10000,250000,500000];
