@@ -263,8 +263,7 @@ isAdmin=true;el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.a
 function enterDash(){
 if(!me){logout();return;}
 el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.remove("hidden");
-drawUser();openTab("home");pop("Notice","Minimum deposit $20. Withdraw time 15 to 20 hours. Fee 12%. Principal stays locked. Press OK.");
-setTimeout(closePop,5000);
+drawUser();openTab("home");pop("Notice","This applies to members who have already taken more than 1 withdrawal. To cancel a pending withdrawal and submit a new request, add 1 direct referral with a $50 starting package. Withdraw time 15 to 20 hours. Fee 12%.");
 if(window._t)clearInterval(window._t);
 window._t=setInterval(function(){drawUser();},1000);
 }
