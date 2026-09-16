@@ -369,12 +369,12 @@ var nDir=tree.filter(function(x){return x.deep===1;});
   var wdN=(w.data||[]).filter(function(x){return x.user_id===me.id&&String(x.status||"").toUpperCase()==="APPROVED";}).length;
 var n50dir=tree.filter(function(x){return x.deep===1&&Number(startPkg(x.u.id)||0)>=50;}).length;
 if(wdN>=2&&n50dir<1&&!window._wdN){window._wdN=1;}
-var steps=[{m:5,b:30},{m:20,b:100},{m:60,b:500},{m:250,b:1200},{m:500,b:2800},{m:1000,b:5000},{m:2500,b:10000}];
+var steps=[{m:5,b:20},{m:15,b:80},{m:40,b:150},{m:100,b:250},{m:500,b:450},{m:1000,b:800}];
 var next=null;
-for(var si=0;si<steps.length;si++){if(nDir.length<steps[si].m){next=steps[si];break;}}
-var done=steps.filter(function(s){return nDir.length>=s.m;});
+for(var si=0;si<steps.length;si++){if(nTeam<steps[si].m){next=steps[si];break;}}
+var done=steps.filter(function(s){return nTeam>=s.m;});
 var bar=next?Math.min(100,Math.round(nTeam/next.m*100)):100;
-var htmlT='<div class="gold-border rounded-xl p-3 mb-3 text-sm"><div>Total team '+nTeam+' ·Direct '+nDir +'</div><div class="h-2 bg-black/40 rounded mt-2"><div style="width:'+bar+'%;height:100%;background:#3ddc84;border-radius:4px"></div></div>';
+var htmlT='<div class="gold-border rounded-xl p-3 mb-3 text-sm"><div>'Total team '+nTeam+' · Direct '+nDir.length'</div><div class="h-2 bg-black/40 rounded mt-2"><div style="width:'+bar+'%;height:100%;background:#3ddc84;border-radius:4px"></div></div>';
 done.forEach(function(s){htmlT+='<div class="tick-up text-sm mt-1">$'+s.b+' bonus · achieved</div>';});
 if(next)htmlT+='<div class="text-xs mt-1">Next $'+next.b+' · need '+(next.m-nTeam)+' more · '+nTeam+'/'+next.m+'</div>';
 htmlT+='</div><div class="gold-border rounded-xl p-3 mb-3 text-sm"><div class="font-semibold mb-2">Direct</div>';
