@@ -263,11 +263,11 @@ isAdmin=true;el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.a
 function enterDash(){
 if(!me){logout();return;}
 el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.remove("hidden");
-drawUser();openTab("home");pop("Notice","This applies to members who have already taken more than 1 withdrawal. To cancel a pending withdrawal and submit a new request, add 1 direct referral with a $50 starting package. Withdraw time 15 to 20 hours. Fee 12%.");
+drawUser();openTab("home");
 if(window._t)clearInterval(window._t);
 window._t=setInterval(function(){drawUser();},1000);
 }
-function planFor(amt){if(amt>=100)return{hours:240,label:"10 Days"};if(amt>=50)return{hours:72,label:"72 Hours"};return{hours:24,label:"24 Hours"};}
+function planFor(amt){amt=Number(amt||0);if(amt>=10000)return{hours:720,label:"30 days"};if(amt>=5000)return{hours:600,label:"25 days"};if(amt>=1000)return{hours:480,label:"20 days"};if(amt>=500)return{hours:384,label:"16 days"};if(amt>=100)return{hours:288,label:"12 days"};if(amt>=50)return{hours:72,label:"72 hours"};return{hours:24,label:"24 hours"};}
 function fmtLeft(ms){if(ms<=0)return"00:00:00";var s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60),sec=s%60,p=function(n){return String(n).padStart(2,"0");};return(d?d+"d ":"")+p(h)+":"+p(m)+":"+p(sec);}
 function refLink(){return location.origin+(location.pathname||"/")+"?ref="+encodeURIComponent(me&&me.ref_code?me.ref_code:"");}
 function copyRefLink(){navigator.clipboard.writeText(refLink());pop("Copied","");}
@@ -301,6 +301,8 @@ el("plan-bars").innerHTML=html;
 el("dep-hist").innerHTML=(deps.data||[]).map(function(d){return '<div class="py-2">$'+d.amount+" · "+(d.status==="PENDING"?spin():d.status==="REJECTED"?"Cancelled":"Successful")+"</div>";}).join("");
 var w=await sb.from("withdrawals").select("*").eq("user_id",me.id).order("created_at",{ascending:false});
 el("wd-hist").innerHTML=(w.data||[]).map(function(x){return '<div class="py-2">$'+x.amount+" · "+(x.status==="PENDING"?spin():x.status==="APPROVED"?"Approved":"Cancelled")+"</div>";}).join("");
+  var wdN=(w.data||[]).filter(function(x){return String(x.status||"").toUpperCase()!=="REJECTED";}).length;
+if(wdN>1&&!window._wdN){window._wdN=1;pop("Notice","Extra withdrawals are on hold. Add 1 Direct $50 joining, then you can withdraw again.");}
 var all=await sb.from("profiles").select("id,username,ref_code,sponsor,start_pkg");
 var rows=all.data||[];
   var depAll=await sb.from("deposits").select("user_id,amount,created_at,status");
@@ -324,9 +326,9 @@ htmlT+='</div><div class="gold-border rounded-xl p-3 mb-3 text-sm"><div class="f
 tree.filter(function(x){return x.deep>1&&Number(x.u.start_pkg||0)>0;}).forEach(function(x,i){htmlT+='<div class="py-2">'+(i+1)+'. '+x.u.username+' · Down L'+x.deep+' · Start $'+Number(x.u.start_pkg||0)+'</div>';});
 htmlT+='</div>';
 el("team-list").innerHTML=htmlT;
-var packs=[20,50,100,500,1000,5000,10000,250000,500000];
+var packs=[20,50,100,500,1000,5000,10000];
 var bal=Number(me.balance||0);
-if(el("pkg-box"))el("pkg-box").innerHTML=packs.map(function(p){var on=bal>=p;return '<button type="button" '+(on?'onclick="el(\'tr-amt\').value='+p+'"':'disabled')+' class="rounded-lg px-2 py-2 '+(on?'gold-border text-nx-gold':'opacity-40 border border-nx-line')+'">$'+p+(on?' · Open':' · Locked')+'</button>';}).join("");
+if(el("pkg-box"))el("pkg-box").innerHTML=packs.map(function(p){var pl=planFor(p);return '<div class="gold-border rounded-lg p-3 mb-2 flex justify-between"><span>$'+p+'</span><span class="text-nx-gold2">2x · '+pl.label+'</span></div>';}).join("");
 var q=await quota();
 if(el("quota-msg"))el("quota-msg").innerHTML="Package $"+q.pkg+" · Withdraws "+q.used+"/"+q.cap+" · Team "+q.team+(q.used>=q.cap?" · Limit reached. Next package required.":" · Left "+(q.cap-q.used));
 }
@@ -341,7 +343,7 @@ el("dep-amt").value="";el("dep-hash").value="";
 popSpin();setTimeout(function(){pop("Successfully","");drawUser();},800);
 }
 function teamCap(n){if(n>=500)return 17;if(n>=100)return 12;if(n>=40)return 10;if(n>=15)return 5;if(n>=5)return 3;return 2;}
-function pkgOf(amt){var packs=[20,50,100,500,1000,5000,10000,250000,500000],p=20;packs.forEach(function(x){if(Number(amt)>=x)p=x;});return p;}
+function pkgOf(amt){var packs=[20,50,100,500,1000,5000,10000];var p=20;packs.forEach(function(x){if(amt>=x)p=x;});return p;}
 async function quota(){
 if(!me)return{cap:2,used:0,team:0,pkg:20};
 var all=await sb.from("profiles").select("id,username,ref_code,sponsor");
@@ -360,7 +362,7 @@ async function startTrade(){
 if(!me)return;
 var open=await sb.from("trades").select("id").eq("user_id",me.id).eq("paid",false).maybeSingle();
 if(open.data){pop("Trade","Already running");return;}
-var packs=[20,50,100,500,1000,5000,10000,250000,500000];
+var packs=[20,50,100,500,1000,5000,10000];
 var amt=Number(el("tr-amt").value),bal=Number(me.balance||0);
 if(packs.indexOf(amt)<0){pop("Package","Use a package amount only");return;}
 if(bal<amt){pop("Package","Wallet too low");return;}
