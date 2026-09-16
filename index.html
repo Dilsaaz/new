@@ -343,21 +343,28 @@ await sb.from("deposits").insert({user_id:me.id,amount:amt,hash:hash,status:"PEN
 el("dep-amt").value="";el("dep-hash").value="";
 popSpin();setTimeout(function(){pop("Successfully","");drawUser();},800);
 }
-function teamCap(n){if(n>=500)return 17;if(n>=100)return 12;if(n>=40)return 10;if(n>=15)return 5;if(n>=5)return 3;return 2;}
-function pkgOf(amt){var packs=[20,50,100,500,1000,5000,10000];var p=20;packs.forEach(function(x){if(amt>=x)p=x;});return p;}
+function pkgOf(amt){var packs=[20,50,100,500,1000,5000,10000];var p=20;packs.forEach(function(x){if(Number(amt)>=x)p=x;});return p;}
+function baseCap(pkg){if(pkg>=10000)return 8;if(pkg>=5000)return 5;if(pkg>=1000)return 4;if(pkg>=500)return 3;return 2;}
+function extraNeed(pkg){if(pkg<=20)return{n:2,min:20,txt:"2 Direct $20"};if(pkg<=50)return{n:8,min:20,txt:"8 Direct $20+"};if(pkg<=100)return{n:20,min:20,txt:"20 Direct"};if(pkg<=500)return{n:10,min:100,txt:"10 Direct $100"};if(pkg<=1000)return{n:25,min:100,txt:"25 Direct $100"};if(pkg<=5000)return{n:50,min:100,txt:"50 Direct $100"};return{n:100,min:100,txt:"100 Direct $100"};}
 async function quota(){
-if(!me)return{cap:2,used:0,team:0,pkg:20};
-var all=await sb.from("profiles").select("id,username,ref_code,sponsor");
+if(!me)return{cap:2,used:0,team:0,pkg:20,need:""};
+var all=await sb.from("profiles").select("id,username,ref_code,sponsor,start_pkg");
 var rows=all.data||[];
-function kids(code){return rows.filter(function(p){return String(p.sponsor||"").toUpperCase()===String(code||"").toUpperCase();});}
-function walk(code,deep){var out=[];kids(code).forEach(function(p){out.push(1);if(deep<3)out=out.concat(walk(p.ref_code,deep+1));});return out;}
-var team=walk(me.ref_code,1).length;
-var cap=teamCap(team);
-var last=await sb.from("trades").select("amount").eq("user_id",me.id).order("ends_at",{ascending:false}).limit(1).maybeSingle();
+var depAll=await sb.from("deposits").select("user_id,amount,status,created_at").eq("status","APPROVED");
+function startOf(uid){var a=(depAll.data||[]).filter(function(d){return d.user_id===uid;}).sort(function(x,y){return new Date(x.created_at)-new Date(y.created_at);});return a[0]?Number(a[0].amount||0):0;}
+function kids(code){return rows.filter(function(r){return r.sponsor===code;});}
+function walk(code,deep){var out=[];kids(code).forEach(function(u){out.push({u:u,deep:deep});out=out.concat(walk(u.ref_code,deep+1));});return out;}
+var tree=walk(me.ref_code,1);
+var last=await sb.from("trades").select("amount").eq("user_id",me.id).order("created_at",{ascending:false}).limit(1).maybeSingle();
 var pkg=pkgOf(last.data?last.data.amount:20);
-var wds=await sb.from("withdrawals").select("amount,status").eq("user_id",me.id);
-var used=(wds.data||[]).filter(function(w){return w.status!=="REJECTED"&&pkgOf(w.amount)===pkg;}).length;
-return {cap:cap,used:used,team:team,pkg:pkg};
+var dirs=tree.filter(function(x){return x.deep===1;});
+var nMin=function(min){return dirs.filter(function(x){return startOf(x.u.id)>=min;}).length;};
+var need=extraNeed(pkg);
+var extra=nMin(need.min)>=need.n?1:0;
+var cap=baseCap(pkg)+extra;
+var wds=await sb.from("withdrawals").select("id,status,user_id").eq("user_id",me.id);
+var used=(wds.data||[]).filter(function(x){return String(x.status||"").toUpperCase()!=="REJECTED";}).length;
+return {cap:cap,used:used,team:tree.length,pkg:pkg,need:need.txt,extra:extra};
 }
 async function startTrade(){
 if(!me)return;
@@ -383,11 +390,12 @@ await loadMe();drawUser();pop("Saved","");
 }
 async function requestWd(){
 if(!me)return;
+  var q=await quota();
+if(q.used>=q.cap){pop("Notice","Package $"+q.pkg+" extra withdraw needs "+q.need+".");return;}
 if(!me.wd_address){pop("Error","Add address");return;}
 var amt=Number(el("wd-amt").value);
 if(!amt||amt>Number(me.balance||0)){pop("Error","Check amount");return;}
-var q=await quota();
-if(q.used>=q.cap){pop("Limit","Withdraw limit "+q.cap+" on $"+q.pkg+" package. Team "+q.team);return;}
+
 var fee=+(amt*0.05).toFixed(2),net=+(amt*0.95).toFixed(2);
 await sb.from("profiles").update({balance:Number(me.balance)-amt}).eq("id",me.id);
 var w=await sb.from("withdrawals").insert({user_id:me.id,amount:amt,fee:fee,net:net,address:me.wd_address,status:"PENDING"});
