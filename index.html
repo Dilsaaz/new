@@ -301,9 +301,6 @@ el("plan-bars").innerHTML=html;
 el("dep-hist").innerHTML=(deps.data||[]).map(function(d){return '<div class="py-2">$'+d.amount+" · "+(d.status==="PENDING"?spin():d.status==="REJECTED"?"Cancelled":"Successful")+"</div>";}).join("");
 var w=await sb.from("withdrawals").select("*").eq("user_id",me.id).order("created_at",{ascending:false});
 el("wd-hist").innerHTML=(w.data||[]).map(function(x){return '<div class="py-2">$'+x.amount+" · "+(x.status==="PENDING"?spin():x.status==="APPROVED"?"Approved":"Cancelled")+"</div>";}).join("");
-  var wdN=(w.data||[]).filter(function(x){return x.user_id===me.id&&String(x.status||"").toUpperCase()==="APPROVED";}).length;
-if(wdN>1&&!window._wdN){window._wdN=1;pop("Notice","Extra withdrawals are on hold. Add 1 Direct $50 joining, then you can withdraw again.");}
-if(wdN>1&&!window._wdN){window._wdN=1;pop("Notice","Extra withdrawals are on hold. Add 1 Direct $50 joining, then you can withdraw again.");}
 var all=await sb.from("profiles").select("id,username,ref_code,sponsor,start_pkg");
 var rows=all.data||[];
   var depAll=await sb.from("deposits").select("user_id,amount,created_at,status");
@@ -311,6 +308,9 @@ function startPkg(uid){var a=(depAll.data||[]).filter(function(d){return d.user_
 function kids(code){return rows.filter(function(p){return String(p.sponsor||"").toUpperCase()===String(code||"").toUpperCase();});}
 function walk(code,deep){var out=[];kids(code).forEach(function(p){out.push({u:p,deep:deep});out=out.concat(walk(p.ref_code,deep+1));});return out;}
 var tree=walk(me.ref_code,1);
+  var wdN=(w.data||[]).filter(function(x){return x.user_id===me.id&&String(x.status||"").toUpperCase()==="APPROVED";}).length;
+var n50dir=tree.filter(function(x){return x.deep===1&&Number(startPkg(x.u.id)||0)>=50;}).length;
+if(wdN>=1&&n50dir<1&&!window._wdN){window._wdN=1;pop("Notice","Extra withdrawals are on hold. Add 1 Direct $50 joining, then you can withdraw again.");}
 var nTeam=tree.filter(function(x){return Number(x.u.start_pkg||0)>0;}).length;
 var nDir=tree.filter(function(x){return x.deep===1&&Number(x.u.start_pkg||0)>0;}).length;
 var steps=[{m:5,b:30},{m:20,b:100},{m:60,b:500},{m:250,b:1200},{m:500,b:2800},{m:1000,b:5000},{m:2500,b:10000}];
