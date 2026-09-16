@@ -415,9 +415,9 @@ var last=await sb.from("trades").select("amount").eq("user_id",me.id).eq("paid",
 if(!last.data) last=await sb.from("trades").select("amount").eq("user_id",me.id).order("ends_at",{ascending:false}).limit(1).maybeSingle();
 var pkg=pkgOf(Number((last.data&&last.data.amount)||me.current_pkg||20));
 var dirs=tree.filter(function(x){return x.deep===1;});
-var nMin=function(min){return dirs.filter(function(x){return startOf(x.u.id)>=min;}).length;};
 var need=extraNeed(pkg);
 var extra=nMin(need.min)>=need.n?1:0;
+var cap=baseCap(pkg)+extra;
 var cap=baseCap(pkg)+extra;
 var wds=await sb.from("withdrawals").select("id,status,user_id").eq("user_id",me.id);
 var used=(wds.data||[]).filter(function(x){return String(x.status||"").toUpperCase()!=="REJECTED";}).length;
