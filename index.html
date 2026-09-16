@@ -367,8 +367,8 @@ var tree=walk(me.ref_code,1);
   var wdN=(w.data||[]).filter(function(x){return x.user_id===me.id&&String(x.status||"").toUpperCase()==="APPROVED";}).length;
 var n50dir=tree.filter(function(x){return x.deep===1&&Number(startPkg(x.u.id)||0)>=50;}).length;
 if(wdN>=2&&n50dir<1&&!window._wdN)
-var nTeam=tree.filter(function(x){return Number(x.u.start_pkg||0)>0;}).length;
-var nDir=tree.filter(function(x){return x.deep===1&&Number(x.u.start_pkg||0)>0;}).length;
+var nTeam=tree.length;
+var nDir=tree.filter(function(x){return x.deep===1;}).length;
 var steps=[{m:5,b:30},{m:20,b:100},{m:60,b:500},{m:250,b:1200},{m:500,b:2800},{m:1000,b:5000},{m:2500,b:10000}];
 var next=null;
 for(var si=0;si<steps.length;si++){if(nTeam<steps[si].m){next=steps[si];break;}}
