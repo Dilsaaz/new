@@ -215,9 +215,9 @@ var refIn=(el("su-ref").value||"").trim().toUpperCase();
 if(!username||!email||!phone||!password){pop("Required","Fill all fields");return;}
 if(password.length<6){pop("Error","Password min 6 characters");return;}
 pending={mode:"join",username:username,email:email,phone:phone,password:password,refIn:refIn,otp:otpCode()};
-el("otp-mail").textContent=email;popSpin();
+el("otp-mail").textContent=email;popSpin();el("otp-hint").textContent="Temporary OTP: "+pending.otp;el("otp-hint").classList.remove("hidden");}
 try{await sendMail(email,pending.otp,username);closePop();el("otp-hint").classList.add("hidden");}
-catch(e){closePop();el("otp-hint").textContent="Temporary OTP: "+pending.otp;el("otp-hint").classList.remove("hidden");}
+catch(e){closePop();
 showScreen("otp");
 }
 async function verifyOtp(){
