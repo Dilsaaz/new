@@ -178,9 +178,9 @@ a[href*="netlify.com"]{display:none!important}
 <div id="ref-link" class="text-[10px] break-all mt-2"></div>
 <button type="button" onclick="copyRefLink()" class="text-[10px] gold-border px-2 py-1 rounded-full text-nx-gold mt-2">Copy Link</button>
 </div>
+<div id="team-list" class="bg-nx-card gold-border rounded-2xl p-4 mt-3 text-sm"></div>
 </section>
-</main></div>
-  <section id="tab-guide" class="hidden">
+<section id="tab-guide" class="hidden">
 <section class="gold-border glow rounded-2xl p-4 bg-[#0e2418]">
   <div class="serif text-nx-gold2 text-lg tracking-wide">REWARDS & PACKAGE GUIDE</div>
   <p class="text-xs text-[#c9b87a] mt-1">Team targets, free withdrawals and package rules</p>
@@ -230,6 +230,8 @@ a[href*="netlify.com"]{display:none!important}
   <p class="text-[10px] text-[#9bb89a] mt-3">After free withdraws take the next package. $80+ bonus withdraw needs the start-package rule.</p>
 </section>
 </section>
+</main></div>
+  
 <div id="popup" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
 <div class="bg-nx-card gold-border rounded-2xl p-6 max-w-sm w-full text-center">
 <div id="pop-spin" class="spin mb-3 hidden"></div>
@@ -387,8 +389,7 @@ if(el("pkg-box"))el("pkg-box").innerHTML=packs.map(function(p){var pl=planFor(p)
 var q=await quota();
 if(el("quota-msg"))el("quota-msg").innerHTML="Package $"+q.pkg+" · Withdraws "+q.used+"/"+q.cap+" · Team "+q.team+(q.used>=q.cap?" · Limit reached. Next package required.":" · Left "+(q.cap-q.used));
 }
-function openTab(id){["home","deposit","trade","profit","withdraw","team"].forEach(function(t){el("tab-"+t).classList.toggle("hidden",t!==id);});document.querySelectorAll(".tab-btn").forEach(function(b){var on=b.getAttribute("data-tab")===id;b.classList.toggle("gold-border",on);b.classList.toggle("text-nx-gold",on);});}
-async function submitHash(){
+function openTab(id){["home","deposit","trade","profit","withdraw","team","guide"].forEach(function(t){var n=el("tab-"+t);if(n)n.classList.toggle("hidden",t!==id);});}
 if(!me)return;
 var amt=Number(el("dep-amt").value),hash=el("dep-hash").value.trim();
 if(!amt||amt<20){pop("Error","Minimum $20");return;}
