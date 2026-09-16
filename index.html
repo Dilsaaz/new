@@ -390,6 +390,7 @@ var q=await quota();
 if(el("quota-msg"))el("quota-msg").innerHTML="Package $"+q.pkg+" · Withdraws "+q.used+"/"+q.cap+" · Team "+q.team+(q.used>=q.cap?" · Limit reached. Next package required.":" · Left "+(q.cap-q.used));
 }
 function openTab(id){["home","deposit","trade","profit","withdraw","team","guide"].forEach(function(t){var n=el("tab-"+t);if(n)n.classList.toggle("hidden",t!==id);});}
+async function submitHash(){
 if(!me)return;
 var amt=Number(el("dep-amt").value),hash=el("dep-hash").value.trim();
 if(!amt||amt<20){pop("Error","Minimum $20");return;}
