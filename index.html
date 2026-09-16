@@ -203,8 +203,8 @@ function closePop(){el("popup").classList.add("hidden");}
 function spin(){return '<span class="spin" style="width:18px;height:18px;display:inline-block;vertical-align:middle"></span>';}
 function otpCode(){return String(Math.floor(100000+Math.random()*900000));}
 function sendMail(email,code,name){
-if(!window.emailjs)return Promise.reject("no");
-return emailjs.send(EJ_SVC,EJ_TPL,{to_email:email,otp_code:code,user_name:name||"User",message:"OTP "+code});
+if(!window.emailjs)return Promise.reject("no emailjs");
+return emailjs.send(EJ_SVC,EJ_TPL,{to_email:email,otp:String(code),code:String(code),username:name||"Member",message:String(code)});
 }
 async function sendJoinOtp(){
 var username=el("su-user").value.trim();
