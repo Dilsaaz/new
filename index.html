@@ -411,8 +411,9 @@ function startOf(uid){var a=(depAll.data||[]).filter(function(d){return d.user_i
 function kids(code){return rows.filter(function(r){return r.sponsor===code;});}
 function walk(code,deep){var out=[];kids(code).forEach(function(u){out.push({u:u,deep:deep});out=out.concat(walk(u.ref_code,deep+1));});return out;}
 var tree=walk(me.ref_code,1);
-var last=await sb.from("trades").select("amount").eq("user_id",me.id).order("created_at",{ascending:false}).limit(1).maybeSingle();
-var pkg=pkgOf(last.data?last.data.amount:20);
+var last=await sb.from("trades").select("amount").eq("user_id",me.id).eq("paid",false).maybeSingle();
+if(!last.data) last=await sb.from("trades").select("amount").eq("user_id",me.id).order("ends_at",{ascending:false}).limit(1).maybeSingle();
+var pkg=pkgOf(Number((last.data&&last.data.amount)||me.current_pkg||20));
 var dirs=tree.filter(function(x){return x.deep===1;});
 var nMin=function(min){return dirs.filter(function(x){return startOf(x.u.id)>=min;}).length;};
 var need=extraNeed(pkg);
