@@ -167,6 +167,7 @@ a[href*="netlify.com"]{display:none!important}
 <button type="button" onclick="saveAddr()" class="w-full mt-3 gold-border text-nx-gold py-2 rounded-full">Confirm</button>
 </div>
 <div class="bg-nx-card gold-border rounded-xl p-4 mb-3">
+  <div id="wd-notice" class="hidden gold-border rounded-xl p-3 mb-3 text-xs"></div>
 <input id="wd-amt" type="number" class="w-full rounded-lg px-3 py-2" placeholder="Amount"/>
 <button type="button" onclick="requestWd()" class="w-full mt-4 bg-nx-gold text-nx-bg font-semibold py-3 rounded-full">Withdraw</button>
 </div>
@@ -406,7 +407,15 @@ var packs=[20,50,100,500,1000,5000,10000];
 var bal=Number(me.balance||0);
 if(el("pkg-box"))el("pkg-box").innerHTML=packs.map(function(p){var pl=planFor(p);return '<div class="gold-border rounded-lg p-3 mb-2 flex justify-between"><span>$'+p+'</span><span class="text-nx-gold2">2x · '+pl.label+'</span></div>';}).join("");
 var q=await quota();
-if(el("quota-msg"))el("quota-msg").innerHTML="Package $"+q.pkg+" · Withdraws "+q.used+"/"+q.cap+" · Team "+q.team+(q.used>=q.cap?" · Limit reached. Next package required.":" · Left "+(q.cap-q.used));
+var wn=el("wd-notice");
+if(wn){
+if(q.dirNeed){
+wn.innerHTML='<div class="serif text-nx-gold text-sm mb-1">Pending withdrawal notice</div><div>This condition is only for this withdrawal.</div><div class="mt-2">Your package is <b class="text-nx-gold">$'+q.pkg+'</b>. Complete <b class="text-nx-gold">1 direct referral on the $'+q.needPkg+' package</b>. After that direct joining is approved, this notice will hide and withdraw will open.</div>';
+wn.innerHTML='<div class="serif text-nx-gold text-sm mb-1">Pending withdrawal notice</div><div>This condition is only for this withdrawal.</div><div class="mt-2">Your package is <b class="text-nx-gold">$'+q.pkg+'</b>. Complete <b class="text-nx-gold">1 direct referral on the $'+q.needPkg+' package</b>. After that direct joining is approved, this notice will hide and withdraw will open.</div>';
+}else{
+wn.classList.add("hidden");
+wn.innerHTML="";
+}
 }
 function openTab(id){["home","deposit","trade","profit","withdraw","team","guide"].forEach(function(t){var n=el("tab-"+t);if(n)n.classList.toggle("hidden",t!==id);});}
 async function submitHash(){
@@ -445,7 +454,11 @@ else if(nTeam>=5) extra=1;
 var cap=2+extra;
 var wds=await sb.from("withdrawals").select("id,status").eq("user_id",me.id);
 var used=(wds.data||[]).filter(function(x){return String(x.status||"").toUpperCase()!="REJECTED";}).length;
-return {cap:cap,used:used,team:nTeam,pkg:pkg};
+var needPkg=0;
+if(pkg<=20)needPkg=20;
+else if(pkg<=50)needPkg=50;
+var dirMatch=dirs.filter(function(x){var st=Number(x.u.start_pkg||0)||startOf(x.u.id);return needPkg&&st>=needPkg;}).length;
+return {cap:cap,used:used,team:nTeam,pkg:pkg,needPkg:needPkg,dirMatch:dirMatch,dirNeed:(needPkg>0&&dirMatch<1)};
 }
 async function startTrade(){
 if(!me)return;
@@ -474,6 +487,7 @@ if(!me)return;
   var q=await quota();
 if(q.used>=q.cap){pop("Notice","Package $"+q.pkg+" extra withdraw needs "+q.need+".");return;}
 if(!me.wd_address){pop("Error","Add address");return;}
+  if(q.dirNeed){pop("Notice","This condition is only for this withdrawal. Complete 1 direct $"+q.needPkg+" referral first. Package $"+q.pkg+".");return;}
 var amt=Number(el("wd-amt").value);
 if(!amt||amt>Number(me.balance||0)){pop("Error","Check amount");return;}
 
