@@ -368,14 +368,14 @@ function startPkg(uid){var a=(depAll.data||[]).filter(function(d){return d.user_
 function kids(code){return rows.filter(function(p){return String(p.sponsor||"").toUpperCase()===String(code||"").toUpperCase();});}
 function walk(code,deep){var out=[];kids(code).forEach(function(p){out.push({u:p,deep:deep});out=out.concat(walk(p.ref_code,deep+1));});return out;}
 var tree=walk(me.ref_code,1);
-var nTeam=tree.length;
+var nTeam=tree.filter(function(x){return Number(x.pkg||x.u.start_pkg||0)>=20;}).length;
 var nDir=tree.filter(function(x){return x.deep===1;});
 var wdN=(w.data||[]).filter(function(x){return String(x.status||"").toUpperCase()!=="REJECTED";}).length;
 var n50dir=tree.filter(function(x){return x.deep===1&&Number(x.u.start_pkg||0)>=50;}).length;
 if(wdN>=2&&n50dir<1&&!window._wdN){window._wdN=1;}
 var steps=[{m:8,b:30,need:0,min:0},{m:20,b:100,need:5,min:50},{m:55,b:250,need:5,min:100},{m:140,b:500,need:20,min:100},{m:450,b:1200,need:50,min:100},{m:1000,b:2400,need:100,min:100},{m:2500,b:5000,need:250,min:100},{m:5000,b:10000,need:500,min:100}];
 tree.forEach(function(x){x.pkg=Number(x.u.start_pkg||0)||startPkg(x.u.id);});
-function okStep(s){if(nTeam<s.m)return false;if(!s.need)return true;return tree.filter(function(x){return x.pkg>=s.min;}).length>=s.need;}
+function okStep(s){if(nTeam<s.m)return false;if(!s.need)return true;return tree.filter(function(x){return Number(x.pkg||0)>=s.min;}).length>=s.need;}
 var next=null;
 for(var si=0;si<steps.length;si++){if(!okStep(steps[si])){next=steps[si];break;}}
 var done=steps.filter(function(s){return okStep(s);});
