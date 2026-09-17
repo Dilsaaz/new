@@ -411,7 +411,7 @@ var q=await quota();
 var wn=el("wd-notice");
 if(wn){
 if(q.dirNeed){
-wn.innerHTML='<div class="serif text-nx-gold text-sm mb-1">Pending withdrawal notice</div><div>This condition is only for this withdrawal.</div><div class="mt-2">Your package is <b class="text-nx-gold">$'+q.pkg+'</b>. Complete <b class="text-nx-gold">1 direct referral on the $'+q.needPkg+' package</b>. After that direct joining is approved, this notice will hide and withdraw will open.</div>';
+  wn.classList.remove("hidden");
 wn.innerHTML='<div class="serif text-nx-gold text-sm mb-1">Pending withdrawal notice</div><div>This condition is only for this withdrawal.</div><div class="mt-2">Your package is <b class="text-nx-gold">$'+q.pkg+'</b>. Complete <b class="text-nx-gold">1 direct referral on the $'+q.needPkg+' package</b>. After that direct joining is approved, this notice will hide and withdraw will open.</div>';
 }else{
 wn.classList.add("hidden");
@@ -457,9 +457,9 @@ var cap=2+extra;
 var wds=await sb.from("withdrawals").select("id,status").eq("user_id",me.id);
 var used=(wds.data||[]).filter(function(x){return String(x.status||"").toUpperCase()!="REJECTED";}).length;
 var needPkg=0;
-if(pkg<=20)needPkg=20;
+if(pkg===20)needPkg=20;
 else if(pkg<=50)needPkg=50;
-var dirMatch=dirs.filter(function(x){var st=Number(x.u.start_pkg||0)||startOf(x.u.id);return needPkg&&st>=needPkg;}).length;
+var dirMatch=dirs.filter(function(x){return startOf(x.u.id)>=needPkg;}).length;
 return {cap:cap,used:used,team:nTeam,pkg:pkg,needPkg:needPkg,dirMatch:dirMatch,dirNeed:(needPkg>0&&dirMatch<1)};
 }
 async function startTrade(){
