@@ -407,6 +407,7 @@ var packs=[20,50,100,500,1000,5000,10000];
 var bal=Number(me.balance||0);
 if(el("pkg-box"))el("pkg-box").innerHTML=packs.map(function(p){var pl=planFor(p);return '<div class="gold-border rounded-lg p-3 mb-2 flex justify-between"><span>$'+p+'</span><span class="text-nx-gold2">2x · '+pl.label+'</span></div>';}).join("");
 var q=await quota();
+  if(el("quota-msg"))el("quota-msg").innerHTML="Package $"+q.pkg+" · Withdraws "+q.used+"/"+q.cap+" · Team "+q.team+(q.used>=q.cap?" · Limit reached. Next package required.":" · Left "+(q.cap-q.used));
 var wn=el("wd-notice");
 if(wn){
 if(q.dirNeed){
