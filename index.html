@@ -416,6 +416,7 @@ function kids(code){
   });
 }
 function walk(code,deep){var out=[];kids(code).forEach(function(p){out.push({u:p,deep:deep});out=out.concat(walk(p.ref_code,deep+1));});return out;}
+  if(!me||!me.ref_code)return{cap:2,used:0,team:0,pkg:0,need:""};
 var tree=walk(me.ref_code,1);
 var nTeam=tree.filter(function(x){return Number(x.pkg||x.u.start_pkg||0)>=20;}).length;
 var nDir=tree.filter(function(x){return x.deep===1;});
@@ -470,10 +471,11 @@ var bal=Number(me.balance||0);
 if(el("pkg-box"))el("pkg-box").innerHTML=packs.map(function(p){var pl=planFor(p);return '<div class="gold-border rounded-lg p-3 mb-2 flex justify-between"><span>$'+p+'</span><span class="text-nx-gold2">2x · '+pl.label+'</span></div>';}).join("");
 var q=await quota();
       if(el("quota-msg"))el("quota-msg").innerHTML=(await hasNewPkg())?("Package $"+q.pkg+" · Withdraws "+q.used+"/"+q.cap+" · Team "+q.team+" · Left "+(q.cap-q.used)):"Package $0 · Account locked · Recharge $80 to activate";
+    var wn=el("wd-notice");
   if(wn){
     var ok=await hasNewPkg();
     if(!ok){
-      wn.classList.remove("hidden");
+        wn.classList.remove("hidden");
       wn.innerHTML='<div class="serif text-nx-gold text-sm">Wallet locked. Activate the new $80 package to unlock funds and withdraw.</div>';
     }else{
       wn.classList.add("hidden");
