@@ -459,15 +459,7 @@ if(el("bal"))el("bal").textContent=newBal.toFixed(2);
 }
 var nd=nDir.length,dn=Math.max(0,nTeam-nd);
 var htmlT='<div class="gold-border rounded-2xl p-3 mb-3 text-sm"><div>Total team '+nTeam+' · Direct '+nd+' · Down '+dn+'</div></div>';
- htmlT+='<div class="gold-border rounded-2xl p-3 mb-3 text-xs">';
-htmlT+='<div class="font-semibold text-nx-gold mb-2">TEAM BONUS</div>';
-var nd2=tree.filter(function(x){return x.deep===1;}).length;
-var dn2=tree.filter(function(x){return x.deep>1;}).length;
-steps.forEach(function(s){
-  var ok=okStep(s);
-  htmlT+='<div class="flex justify-between py-1 border-b border-white/10"><span>$'+s.b+' · Dir '+(s.dir||0)+' · Down '+(s.down||0)+' · Total '+s.tot+'</span><span style="color:'+(ok?'#3ddc84':'#888')+'">'+(ok?'Done':'Dir '+nd2+'/'+(s.dir||0)+' · Down '+dn2+'/'+(s.down||0))+'</span></div>';
-});
-htmlT+='</div>'; 
+ 
 function isAct(uid){
   return (depAll.data||[]).some(function(d){
     return d.user_id===uid && String(d.status||"").toUpperCase()==="APPROVED" && NEWP.indexOf(Number(d.amount))>=0 && new Date(d.created_at).getTime()>=new Date(LOCK_AT).getTime();
@@ -477,6 +469,20 @@ function row(x){
   var on=isAct(x.u.id),wal=Number(x.u.balance||0).toFixed(2);
   return '<div class="flex justify-between py-1 border-b border-white/10 text-xs"><span>'+(x.u.username||"—")+' · L'+x.deep+'</span><span>$'+wal+(on?' <span style="color:#3ddc84">Active</span>':' <span style="color:#888">Inactive</span>')+'</span></div>';
 }
+var aDir=tree.filter(function(x){return x.deep===1&&isAct(x.u.id);}).length;
+var aDn=tree.filter(function(x){return x.deep>1&&isAct(x.u.id);}).length;
+var aTot=aDir+aDn;
+var nxt=null;
+for(var si=0;si<steps.length;si++){
+  var s=steps[si];
+  if(aTot<(s.tot||0)||(s.dir&&aDir<s.dir)||(s.down&&aDn<s.down)){nxt=s;break;}
+}
+var pct=nxt?Math.min(100,Math.round(aTot/(nxt.tot||1)*100)):100;
+htmlT+='<div class="gold-border rounded-2xl p-3 mb-3 text-sm">';
+htmlT+='<div class="h-2 rounded bg-black/40 overflow-hidden mb-2"><div style="width:'+pct+'%;height:100%;background:#3ddc84"></div></div>';
+if(nxt)htmlT+='<div>Next $'+nxt.b+' bonus · Active '+aTot+'/'+nxt.tot+' · Dir '+aDir+'/'+(nxt.dir||0)+' · Down '+aDn+'/'+(nxt.down||0)+'</div>';
+else htmlT+='<div style="color:#3ddc84">All team bonuses unlocked</div>';
+htmlT+='</div>';
 var act=tree.filter(function(x){return isAct(x.u.id);});
 var ina=tree.filter(function(x){return !isAct(x.u.id);});
 htmlT+='<div class="gold-border rounded-2xl p-3 mb-3 text-sm"><div class="font-semibold mb-2" style="color:#3ddc84">Active · '+act.length+'</div>';
