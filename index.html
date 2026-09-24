@@ -325,11 +325,14 @@ if(el("ad-id").value.trim()!==ADMIN_ID||el("ad-pass").value!==ADMIN_PASS){pop("E
 isAdmin=true;el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.add("hidden");el("admin-wrap").classList.remove("hidden");renderAdmin();
 }
 function enterDash(){
-if(!me){logout();return;}
-el("auth-wrap").classList.add("hidden");el("dash-wrap").classList.remove("hidden");
-drawUser();openTab("home");
-if(window._t)clearInterval(window._t);
-window._t=setInterval(function(){drawUser();},1000);
+  if(!me){logout();return;}
+  el("popup").classList.add("hidden");
+  el("auth-wrap").classList.add("hidden");
+  el("dash-wrap").classList.remove("hidden");
+  openTab("home");
+  drawUser().catch(function(e){pop("Dash error",String(e&&e.message||e));});
+  if(window._t)clearInterval(window._t);
+  window._t=setInterval(function(){drawUser();},1000);
 }
 function planFor(amt){
   amt=Number(amt)||0;
@@ -470,9 +473,9 @@ function startOf(uid){var a=(depAll.data||[]).filter(function(d){return d.user_i
 function kids(code){return rows.filter(function(r){return r.sponsor===code;});}
 function walk(code,deep){var out=[];kids(code).forEach(function(u){out.push({u:u,deep:deep});out=out.concat(walk(u.ref_code,deep+1));});return out;}
 var tree=walk(me.ref_code,1);
-var last=await sb.from("trades").select("amount").eq("user_id",me.id).eq("paid",false).maybeSingle();
-if(!last.data) last=await sb.from("trades").select("amount").eq("user_id",me.id).order("ends_at",{ascending:false}).limit(1).maybeSingle();
-var pkg=pkgOf(Number((last.data&&last.data.amount)||me.current_pkg||20));
+var last=await sb.from("trades").select("amount").eq("user_id",me.id).eq("paid",false).limit(1);
+if(!last.data||!last.data.length) last=await sb.from("trades").select("amount").eq("user_id",me.id).order("ends_at",{ascending:false}).limit(1);
+var pkg=pkgOf(Number((last.data&&last.data[0]&&last.data[0].amount)||0));
 var dirs=tree.filter(function(x){return x.deep===1;});
 var nTeam=tree.length;
 var extra=0;
@@ -494,8 +497,8 @@ return {cap:cap,used:used,team:nTeam,pkg:pkg,needPkg:needPkg,dirMatch:dirMatch,d
 async function startTrade(){
 if(!me)return;
   if(!(await hasNewPkg())){pop("Locked","Activate $80 package first. Old wallet stays locked until $80 recharge.");return}
-var open=await sb.from("trades").select("id").eq("user_id",me.id).eq("paid",false).maybeSingle();
-if(open.data){pop("Trade","Already running");return;}
+var open=await sb.from("trades").select("id").eq("user_id",me.id).eq("paid",false).limit(1);
+if(open.data&&open.data.length){pop("Trade","Already running");return;}
 var packs=[80,250,500,1500,2500,6000,12000,22000];
 var amt=Number(el("tr-amt").value),bal=Number(me.balance||0);
 if(packs.indexOf(amt)<0){pop("Package","Use a package amount only");return;}
