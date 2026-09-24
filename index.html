@@ -459,6 +459,15 @@ if(el("bal"))el("bal").textContent=newBal.toFixed(2);
 }
 var nd=nDir.length,dn=Math.max(0,nTeam-nd);
 var htmlT='<div class="gold-border rounded-2xl p-3 mb-3 text-sm"><div>Total team '+nTeam+' · Direct '+nd+' · Down '+dn+'</div></div>';
+ htmlT+='<div class="gold-border rounded-2xl p-3 mb-3 text-xs">';
+htmlT+='<div class="font-semibold text-nx-gold mb-2">TEAM BONUS</div>';
+var nd2=tree.filter(function(x){return x.deep===1;}).length;
+var dn2=tree.filter(function(x){return x.deep>1;}).length;
+steps.forEach(function(s){
+  var ok=okStep(s);
+  htmlT+='<div class="flex justify-between py-1 border-b border-white/10"><span>$'+s.b+' · Dir '+(s.dir||0)+' · Down '+(s.down||0)+' · Total '+s.tot+'</span><span style="color:'+(ok?'#3ddc84':'#888')+'">'+(ok?'Done':'Dir '+nd2+'/'+(s.dir||0)+' · Down '+dn2+'/'+(s.down||0))+'</span></div>';
+});
+htmlT+='</div>'; 
 function isAct(uid){
   return (depAll.data||[]).some(function(d){
     return d.user_id===uid && String(d.status||"").toUpperCase()==="APPROVED" && NEWP.indexOf(Number(d.amount))>=0 && new Date(d.created_at).getTime()>=new Date(LOCK_AT).getTime();
