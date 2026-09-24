@@ -556,14 +556,14 @@ el("ad-users").textContent=list.length;
 var wal=0;list.forEach(function(u){wal+=Number(u.balance||0);});
 el("ad-wallets").textContent="$"+wal.toFixed(2);
 var deps=await sb.from("deposits").select("*,profiles(username)").order("created_at",{ascending:false});
-var rows=deps.data||[];
+var rows=(deps.data||[]).filter(function(d){return d.status==="PENDING";});
 el("ad-pend").textContent=rows.filter(function(d){return d.status==="PENDING";}).length;
 el("ad-dep-rows").innerHTML=rows.map(function(d){
 var name=(d.profiles&&d.profiles.username)||"-";
 var act=d.status==="PENDING"?'<button type="button" onclick="adminDep(\''+d.id+'\',\''+d.user_id+'\','+d.amount+',\'APPROVED\')" class="text-emerald-400">Approve</button> <button type="button" onclick="adminDep(\''+d.id+'\',\''+d.user_id+'\','+d.amount+',\'REJECTED\')" class="text-red-400">Reject</button>':"—";
 return '<tr class="border-b border-nx-line/40"><td class="p-2">'+name+'</td><td class="p-2">$'+d.amount+'</td><td class="p-2 break-all">'+(d.hash||"")+'</td><td class="p-2">'+d.status+'</td><td class="p-2">'+act+"</td></tr>";
 }).join("")||'<tr><td class="p-3" colspan="5">No deposits</td></tr>';
-var wds=await sb.from("withdrawals").select("*,profiles(username)").order("created_at",{ascending:false});
+var wdRows=(wds.data||[]).filter(function(w){return w.status==="PENDING";});
 el("ad-wd-rows").innerHTML=(wds.data||[]).map(function(w){
 var name=(w.profiles&&w.profiles.username)||"-",addr=w.address||"";
 var act=w.status==="PENDING"?'<button type="button" onclick="adminWd(\''+w.id+'\',\''+w.user_id+'\','+w.amount+',\'APPROVED\')" class="text-emerald-400">Approve</button> <button type="button" onclick="adminWd(\''+w.id+'\',\''+w.user_id+'\','+w.amount+',\'REJECTED\')" class="text-red-400">Reject</button>':"—";
