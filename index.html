@@ -474,10 +474,14 @@ popSpin();setTimeout(function(){pop("Successfully","");drawUser();},800);
 }
 function pkgOf(amt){var packs=[80,250,500,1500,2500,6000,12000,22000];var n=Number(amt)||0,out=80;packs.forEach(function(p){if(n>=p)out=p;});return out;}
 async function hasNewPkg(){
+var LOCK_AT="2026-09-24T13:00:00.000Z";
+async function hasNewPkg(){
   if(!me) return false;
-  var d=await sb.from("deposits").select("amount,status").eq("user_id",me.id);
+  var d=await sb.from("deposits").select("amount,status,created_at").eq("user_id",me.id);
   return (d.data||[]).some(function(x){
-    return String(x.status).toUpperCase()==="APPROVED" && NEWP.indexOf(Number(x.amount))>=0;
+    return String(x.status).toUpperCase()==="APPROVED"
+      && NEWP.indexOf(Number(x.amount))>=0
+      && new Date(x.created_at).getTime()>=new Date(LOCK_AT).getTime();
   });
 }
 function baseCap(pkg){if(pkg>=10000)return 8;if(pkg>=5000)return 5;if(pkg>=1000)return 4;if(pkg>=500)return 3;return 2;}
