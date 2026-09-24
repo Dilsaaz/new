@@ -35,7 +35,7 @@ a[href*="netlify.com"]{display:none!important}
 <div>
 <p class="text-nx-gold text-xs tracking-[0.25em] mb-3">GLOBAL CRYPTO TRADING PLATFORM</p>
 <h1 class="serif text-4xl text-nx-gold leading-tight">Norvex Trade.<br/>Earn. Grow.</h1>
-<p class="text-sm text-amber-100/70 mt-4">A
+<p class="text-sm text-amber-100/70 mt-4">AI-powered crypto trading. Daily plans from $80.</p>
 <div class="flex gap-3 mt-6">
 <button type="button" onclick="showScreen('signup')" class="bg-nx-gold text-nx-bg font-semibold px-6 py-3 rounded-full">Join Now</button>
 <button type="button" onclick="showScreen('login')" class="gold-border text-nx-gold px-6 py-3 rounded-full">Login</button>
@@ -475,7 +475,6 @@ popSpin();setTimeout(function(){pop("Successfully","");drawUser();},800);
 function pkgOf(amt){var packs=[80,250,500,1500,2500,6000,12000,22000];var n=Number(amt)||0,out=80;packs.forEach(function(p){if(n>=p)out=p;});return out;}
 async function hasNewPkg(){
 var LOCK_AT="2026-09-24T13:00:00.000Z";
-async function hasNewPkg(){
   if(!me) return false;
   var d=await sb.from("deposits").select("amount,status,created_at").eq("user_id",me.id);
   return (d.data||[]).some(function(x){
