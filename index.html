@@ -254,7 +254,7 @@ var sb=supabase.createClient(SB_URL,SB_KEY);
 var ADMIN_ID="admin",ADMIN_PASS="Norvex@2026";
 var EJ_PUB="tjvq6nXPfo-Kcs_gR",EJ_SVC="service_e8rlj8i",EJ_TPL="template_iwl5w65";
 var pending=null,me=null,candles=[],px=68432.21,isAdmin=false;
-var NEWP=[80,250,500,1500,2500,6000,12000,22000];
+var NEWP=[80,250,500,1500,2500,6000];
 var LOCK_AT="2026-09-24T13:00:00.000Z";
 if(window.emailjs){try{emailjs.init({publicKey:EJ_PUB});}catch(e){}}
 function el(id){return document.getElementById(id);}
@@ -338,14 +338,7 @@ function enterDash(){
 }
 function planFor(amt){
   amt=Number(amt)||0;
-  if(amt>=22000) return {amt:22000,hours:3600,label:"150 days"};
-  if(amt>=12000) return {amt:12000,hours:2160,label:"90 days"};
-  if(amt>=6000) return {amt:6000,hours:1200,label:"50 days"};
-  if(amt>=2500) return {amt:2500,hours:720,label:"30 days"};
-  if(amt>=1500) return {amt:1500,hours:528,label:"22 days"};
-  if(amt>=500) return {amt:500,hours:360,label:"15 days"};
-  if(amt>=250) return {amt:250,hours:192,label:"8 days"};
-  if(amt>=80) return {amt:80,hours:72,label:"72 hours"};
+  if(amt>=80) return {amt:amt,hours:24,label:"24 hours · 3% daily"};
   return {amt:0,hours:0,label:"—"};
 }
 function fmtLeft(ms){if(ms<=0)return"00:00:00";var s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60),sec=s%60,p=function(n){return String(n).padStart(2,"0");};return(d?d+"d ":"")+p(h)+":"+p(m)+":"+p(sec);}
@@ -373,19 +366,15 @@ var t=await sb.from("trades").select("*").eq("user_id",me.id).eq("paid",false).l
 t={data:(t.data&&t.data[0])||null};
 if(!t.data||!t.data.ends_at)return;
 if(Date.now()>=new Date(t.data.ends_at).getTime()){
-var inv=Number(t.data.amount)||0,twox=+(inv*2).toFixed(2);
-  if(NEWP.indexOf(inv)<0){
-    await sb.from("trades").update({paid:true}).eq("id",t.data.id);
-    return;
-  }
+var inv=Number(t.data.amount)||0,gain=+(inv*0.03).toFixed(2);
+  
 await sb.from("trades").update({paid:true}).eq("id",t.data.id);
-await sb.from("profiles").update({balance:Number(me.balance||0)+twox,profit:Number(me.profit||0)+twox}).eq("id",me.id);
+await sb.from("profiles").update({balance:Number(me.balance||0)+gain,profit:Number(me.profit||0)+gain}).eq("id",me.id);
 await loadMe();
 }
 }
 async function drawUser(){
 if(!me)return;
-await closeOpenTrades();
 await endTradeCheck();
 el("bal").textContent=Number(me.balance||0).toFixed(2);
 el("profit-home").textContent=Number(me.profit||0).toFixed(2);
@@ -493,9 +482,9 @@ ina.forEach(function(x){htmlT+=row(x);});
 if(!ina.length)htmlT+='<div class="text-xs text-white/40">None</div>';
 htmlT+='</div>';
 el("team-list").innerHTML=htmlT;
-var packs=[80,250,500,1500,2500,6000,12000,22000];
+var packs=;[80,250,500,1500,2500,6000]
 var bal=Number(me.balance||0);
-if(el("pkg-box"))el("pkg-box").innerHTML=packs.map(function(p){var pl=planFor(p);return '<div class="gold-border rounded-lg p-3 mb-2 flex justify-between"><span>$'+p+'</span><span class="text-nx-gold2">2x · '+pl.label+'</span></div>';}).join("");
+if(el("pkg-box"))el("pkg-box").innerHTML=packs.map(function(p){var pl=planFor(p);return '<div class="gold-border rounded-lg p-3 mb-2 flex justify-between"><span>$'+p+'</span><span class="text-nx-gold2">3% · '+pl.label+'</span></div>';}).join("");
 var q=await quota();
       if(el("quota-msg"))el("quota-msg").innerHTML=(await hasNewPkg())?("Package $"+q.pkg+" · Withdraws "+q.used+"/"+q.cap+" · Team "+q.team+" · Left "+(q.cap-q.used)):"Package $0 · Account locked · Recharge $80 to activate";
     var wn=el("wd-notice");
@@ -568,12 +557,13 @@ if(!me)return;
   if(!(await hasNewPkg())){pop("Locked","Activate $80 package first. Old wallet stays locked until $80 recharge.");return}
 var open=await sb.from("trades").select("id").eq("user_id",me.id).eq("paid",false).limit(1);
 if(open.data&&open.data.length){pop("Trade","Already running");return;}
-var packs=[80,250,500,1500,2500,6000,12000,22000];
+var packs=[80,250,500,1500,2500,6000];
 var amt=Number(el("tr-amt").value),bal=Number(me.balance||0);
-if(packs.indexOf(amt)<0){pop("Package","Use a package amount only");return;}
+if(!amt) amt=Number(me.balance||0);
+amt=+Number(amt).toFixed(2);
+if(amt<80){pop("Trade","Minimum $80");return;}
 if(bal<amt){pop("Package","Wallet too low");return;}
 var q=await quota();
-if(q.used>=q.cap&&amt<=q.pkg){pop("Limit","Quota "+q.used+"/"+q.cap+" on $"+q.pkg+". Take next package");return;}
 var plan=planFor(amt);
 var end=new Date(Date.now()+plan.hours*3600*1000).toISOString();
 await sb.from("trades").insert({user_id:me.id,amount:amt,label:plan.label,ends_at:end,paid:false});
@@ -590,7 +580,8 @@ async function requestWd(){
 if(!me)return;
     if(!(await hasNewPkg())){pop("Locked","Activate $80 package to unlock wallet and withdraw.");return}
 var amt=Number(el("wd-amt").value);
-if(!amt||amt>Number(me.balance||0)){pop("Error","Check amount");return;}
+var can=+(Number(me.profit||0)+Number(me.ref_bonus||0)).toFixed(2);
+if(!amt||amt>can){pop("Withdraw","Only profit + bonus. Available $"+can);return;}
 
 var fee=+(amt*0.12).toFixed(2),net=+(amt*0.88).toFixed(2);
 await sb.from("profiles").update({balance:Number(me.balance)-amt}).eq("id",me.id);
