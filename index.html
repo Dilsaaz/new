@@ -411,7 +411,7 @@ function walk(code,deep){var out=[];kids(code).forEach(function(p){out.push({u:p
 var tree=walk(me.ref_code,1);
 var nTeam=tree.filter(function(x){return Number(x.pkg||x.u.start_pkg||0)>=20;}).length;
 var nDir=tree.filter(function(x){return x.deep===1;});
-var wdN=(w.data||[]).filter(function(x){return String(x.status||"").toUpperCase()!=="REJECTED";}).length;
+var wdN=0;
 var n50dir=tree.filter(function(x){return x.deep===1&&Number(x.u.start_pkg||0)>=50;}).length;
 if(wdN>=2&&n50dir<1&&!window._wdN){window._wdN=1;}
 var steps=[{m:8,b:30,need:0,min:0},{m:20,b:100,need:5,min:50},{m:55,b:250,need:5,min:100},{m:140,b:500,need:20,min:100},{m:450,b:1200,need:50,min:100},{m:1000,b:2400,need:100,min:100},{m:2500,b:5000,need:250,min:100},{m:5000,b:10000,need:500,min:100}];
