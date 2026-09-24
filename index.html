@@ -255,6 +255,7 @@ var ADMIN_ID="admin",ADMIN_PASS="Norvex@2026";
 var EJ_PUB="tjvq6nXPfo-Kcs_gR",EJ_SVC="service_e8rlj8i",EJ_TPL="template_iwl5w65";
 var pending=null,me=null,candles=[],px=68432.21,isAdmin=false;
 var NEWP=[80,250,500,1500,2500,6000,12000,22000];
+var LOCK_AT="2026-09-24T13:00:00.000Z";
 if(window.emailjs){try{emailjs.init({publicKey:EJ_PUB});}catch(e){}}
 function el(id){return document.getElementById(id);}
 function showScreen(n){["landing","signup","otp","login","adminlogin"].forEach(function(x){var e=el("screen-"+x);if(e)e.classList.toggle("hidden",x!==n);});}
@@ -438,18 +439,30 @@ var bar=next?Math.min(100,Math.round(nTeam/next.m*100)):100;
 var htmlT='<div class="gold-border rounded-2xl p-3 mb-3 text-sm"><div>Total team '+nTeam+' · Direct '+nDir.length+'</div><div class="h-2 rounded bg-black/40 mt-2 overflow-hidden"><div style="width:'+bar+'%;height:100%;background:#3ddc84"></div></div>';
 done.forEach(function(s){htmlT+='<div class="text-sm mt-1" style="color:#3ddc84">$'+s.b+' bonus · added to wallet</div>';});
 if(next)htmlT+='<div class="text-xs mt-1">Next $'+next.b+' · need '+(next.m-nTeam)+' more · '+nTeam+'/'+next.m+(next.need?' · '+next.need+' IDs $'+next.min+'+':'')+'</div>';
-htmlT+='</div><div class="gold-border rounded-2xl p-3 mb-3 text-sm"><div class="font-semibold mb-2">Direct</div>';
-tree.filter(function(x){return x.deep===1;})
-htmlT+='</div><div class="gold-border rounded-2xl p-3 mb-3 text-sm"><div class="font-semibold mb-2">Down team</div>';
-tree.filter(function(x){return x.deep>1;})
+function isAct(uid){
+  return (depAll.data||[]).some(function(d){
+    return d.user_id===uid && String(d.status||"").toUpperCase()==="APPROVED" && NEWP.indexOf(Number(d.amount))>=0 && new Date(d.created_at).getTime()>=new Date(LOCK_AT).getTime();
+  });
+}
+function row(x){
+  var on=isAct(x.u.id),wal=Number(x.u.balance||0).toFixed(2);
+  return '<div class="flex justify-between py-1 border-b border-white/10 text-xs"><span>'+(x.u.username||"—")+' · L'+x.deep+'</span><span>$'+wal+(on?' <span style="color:#3ddc84">Active</span>':' <span style="color:#888">Inactive</span>')+'</span></div>';
+}
+var act=tree.filter(function(x){return isAct(x.u.id);});
+var ina=tree.filter(function(x){return !isAct(x.u.id);});
+htmlT+='<div class="gold-border rounded-2xl p-3 mb-3 text-sm"><div class="font-semibold mb-2" style="color:#3ddc84">Active · '+act.length+'</div>';
+act.forEach(function(x){htmlT+=row(x);});
+if(!act.length)htmlT+='<div class="text-xs text-white/40">No active members yet</div>';
+htmlT+='</div><div class="gold-border rounded-2xl p-3 mb-3 text-sm"><div class="font-semibold mb-2" style="color:#888">Inactive · '+ina.length+'</div>';
+ina.forEach(function(x){htmlT+=row(x);});
+if(!ina.length)htmlT+='<div class="text-xs text-white/40">None</div>';
 htmlT+='</div>';
 el("team-list").innerHTML=htmlT;
 var packs=[80,250,500,1500,2500,6000,12000,22000];
 var bal=Number(me.balance||0);
 if(el("pkg-box"))el("pkg-box").innerHTML=packs.map(function(p){var pl=planFor(p);return '<div class="gold-border rounded-lg p-3 mb-2 flex justify-between"><span>$'+p+'</span><span class="text-nx-gold2">2x · '+pl.label+'</span></div>';}).join("");
 var q=await quota();
-  if(el("quota-msg"))el("quota-msg").innerHTML="Package $"+q.pkg+" · Withdraws "+q.used+"/"+q.cap+" · Team "+q.team+(q.used>=q.cap?" · Limit reached. Next package required.":" · Left "+(q.cap-q.used));
-  var wn=el("wd-notice");
+      if(el("quota-msg"))el("quota-msg").innerHTML=(await hasNewPkg())?("Package $"+q.pkg+" · Withdraws "+q.used+"/"+q.cap+" · Team "+q.team+" · Left "+(q.cap-q.used)):"Package $0 · Account locked · Recharge $80 to activate";
   if(wn){
     var ok=await hasNewPkg();
     if(!ok){
