@@ -399,10 +399,9 @@ var deps=await sb.from("deposits").select("*").eq("user_id",me.id).order("create
 var html="";
 if(t.data)html+='<div class="py-2">Trade $'+t.data.amount+" · "+fmtLeft(new Date(t.data.ends_at).getTime()-Date.now())+"</div>";
 (deps.data||[]).forEach(function(d){html+='<div class="py-2">Deposit $'+d.amount+" · "+(d.status==="PENDING"?spin():d.status==="REJECTED"?"Cancelled":"Successful")+"</div>";});
-el("plan-bars").innerHTML=html;
-el("dep-hist").innerHTML=(deps.data||[]).map(function(d){return '<div class="py-2">$'+d.amount+" · "+(d.status==="PENDING"?spin():d.status==="REJECTED"?"Cancelled":"Successful")+"</div>";}).join("");
-var w=await sb.from("withdrawals").select("*").eq("user_id",me.id).order("created_at",{ascending:false});
-el("wd-hist").innerHTML=(w.data||[]).map(function(x){return '<div class="py-2">$'+x.amount+" · "+(x.status==="PENDING"?spin():x.status==="APPROVED"?"Approved":"Cancelled")+"</div>";}).join("");
+if(el("plan-bars"))el("plan-bars").innerHTML="";
+if(el("dep-hist"))el("dep-hist").innerHTML="";
+if(el("wd-hist"))el("wd-hist").innerHTML="";
 var all=await sb.from("profiles").select("id,username,ref_code,sponsor,start_pkg");
 var rows=all.data||[];
   var depAll=await sb.from("deposits").select("user_id,amount,created_at,status");
