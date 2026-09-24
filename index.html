@@ -350,6 +350,22 @@ function planFor(amt){
 function fmtLeft(ms){if(ms<=0)return"00:00:00";var s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60),sec=s%60,p=function(n){return String(n).padStart(2,"0");};return(d?d+"d ":"")+p(h)+":"+p(m)+":"+p(sec);}
 function refLink(){return location.origin+(location.pathname||"/")+"?ref="+encodeURIComponent(me&&me.ref_code?me.ref_code:"");}
 function copyRefLink(){navigator.clipboard.writeText(refLink());pop("Copied","");}
+async function closeOpenTrades(){
+  if(!me)return;
+  var t=await sb.from("trades").select("id,amount").eq("user_id",me.id).eq("paid",false);
+  var rows=t.data||[];
+  if(!rows.length)return;
+  var add=0;
+  for(var i=0;i<rows.length;i++){
+    add+=Number(rows[i].amount)||0;
+    await sb.from("trades").update({paid:true}).eq("id",rows[i].id);
+  }
+  if(add>0){
+    var nb=Number(me.balance||0)+add;
+    await sb.from("profiles").update({balance:nb}).eq("id",me.id);
+    me.balance=nb;
+  }
+}
 async function endTradeCheck(){
 if(!me)return;
 var t=await sb.from("trades").select("*").eq("user_id",me.id).eq("paid",false).limit(1);
@@ -368,6 +384,7 @@ await loadMe();
 }
 async function drawUser(){
 if(!me)return;
+await closeOpenTrades();
 await endTradeCheck();
 el("bal").textContent=Number(me.balance||0).toFixed(2);
 el("profit-home").textContent=Number(me.profit||0).toFixed(2);
