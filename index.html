@@ -46,12 +46,15 @@ a[href*="netlify.com"]{display:none!important}
 </div></div>
 <h2 class="serif text-center text-nx-gold text-2xl mt-12 mb-5">Investment Plans</h2>
 <div class="grid grid-cols-2 gap-3">
-<div class="bg-nx-card gold-border rounded-2xl p-4 text-center"><div class="serif text-2xl text-nx-gold">$20</div><div class="text-[11px] mt-1">24 HOURS · 2X</div></div>
-<div class="bg-nx-card gold-border rounded-2xl p-4 text-center"><div class="serif text-2xl text-nx-gold">$50</div><div class="text-[11px] mt-1">72 HOURS · 2X</div></div>
-<div class="bg-nx-card gold-border rounded-2xl p-4 text-center"><div class="serif text-2xl text-nx-gold">$100</div><div class="text-[11px] mt-1">12 DAYS · 2X</div></div>
-<div class="bg-nx-card gold-border rounded-2xl p-4 text-center"><div class="serif text-2xl text-nx-gold">$10000</div><div class="text-[11px] mt-1">30 DAYS · 2X</div></div>
+<div class="bg-nx-card gold-border rounded-2xl p-4 text-center"><div class="serif text-2xl text-nx-gold">$80</div><div class="text-[11px] mt-1">72 HOURS · 2X</div></div>
+<div class="bg-nx-card gold-border rounded-2xl p-4 text-center"><div class="serif text-2xl text-nx-gold">$250</div><div class="text-[11px] mt-1">8 DAYS · 2X</div></div>
+<div class="bg-nx-card gold-border rounded-2xl p-4 text-center"><div class="serif text-2xl text-nx-gold">$500</div><div class="text-[11px] mt-1">15 DAYS · 2X</div></div>
+<div class="bg-nx-card gold-border rounded-2xl p-4 text-center"><div class="serif text-2xl text-nx-gold">$1500</div><div class="text-[11px] mt-1">22 DAYS · 2X</div></div>
+<div class="bg-nx-card gold-border rounded-2xl p-4 text-center"><div class="serif text-2xl text-nx-gold">$2500</div><div class="text-[11px] mt-1">30 DAYS · 2X</div></div>
+<div class="bg-nx-card gold-border rounded-2xl p-4 text-center"><div class="serif text-2xl text-nx-gold">$6000</div><div class="text-[11px] mt-1">50 DAYS · 2X</div></div>
+<div class="bg-nx-card gold-border rounded-2xl p-4 text-center"><div class="serif text-2xl text-nx-gold">$12000</div><div class="text-[11px] mt-1">90 DAYS · 2X</div></div>
+<div class="bg-nx-card gold-border rounded-2xl p-4 text-center"><div class="serif text-2xl text-nx-gold">$22000</div><div class="text-[11px] mt-1">150 DAYS · 2X</div></div>
 </div>
-</section>
 <section id="screen-signup" class="hidden max-w-md mx-auto px-4 py-10">
 <div class="bg-nx-card gold-border rounded-2xl p-6">
 <h2 class="serif text-2xl text-nx-gold text-center">Create Account</h2>
@@ -419,7 +422,7 @@ htmlT+='</div><div class="gold-border rounded-2xl p-3 mb-3 text-sm"><div class="
 tree.filter(function(x){return x.deep>1;})
 htmlT+='</div>';
 el("team-list").innerHTML=htmlT;
-var packs=[20,50,100,500,1000,5000,10000];
+var packs=[80,250,500,1500,2500,6000,12000,22000];
 var bal=Number(me.balance||0);
 if(el("pkg-box"))el("pkg-box").innerHTML=packs.map(function(p){var pl=planFor(p);return '<div class="gold-border rounded-lg p-3 mb-2 flex justify-between"><span>$'+p+'</span><span class="text-nx-gold2">2x · '+pl.label+'</span></div>';}).join("");
 var q=await quota();
@@ -491,7 +494,7 @@ if(!me)return;
   if(!(await hasNewPkg())){pop("Locked","Activate $80 package first. Old wallet stays locked until $80 recharge.");return}
 var open=await sb.from("trades").select("id").eq("user_id",me.id).eq("paid",false).maybeSingle();
 if(open.data){pop("Trade","Already running");return;}
-var packs=[20,50,100,500,1000,5000,10000];
+var packs=[80,250,500,1500,2500,6000,12000,22000];
 var amt=Number(el("tr-amt").value),bal=Number(me.balance||0);
 if(packs.indexOf(amt)<0){pop("Package","Use a package amount only");return;}
 if(bal<amt){pop("Package","Wallet too low");return;}
