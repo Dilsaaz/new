@@ -348,7 +348,8 @@ function refLink(){return location.origin+(location.pathname||"/")+"?ref="+encod
 function copyRefLink(){navigator.clipboard.writeText(refLink());pop("Copied","");}
 async function endTradeCheck(){
 if(!me)return;
-var t=await sb.from("trades").select("*").eq("user_id",me.id).eq("paid",false).maybeSingle();
+var t=await sb.from("trades").select("*").eq("user_id",me.id).eq("paid",false).limit(1);
+t={data:(t.data&&t.data[0])||null};
 if(!t.data||!t.data.ends_at)return;
 if(Date.now()>=new Date(t.data.ends_at).getTime()){
 var inv=Number(t.data.amount)||0,twox=+(inv*2).toFixed(2);
@@ -370,7 +371,8 @@ el("profit-total").textContent=Number(me.profit||0).toFixed(2);
 el("ref-code").textContent=me.ref_code||"";
 el("ref-link").textContent=refLink();
 el("wd-saved").textContent=me.wd_address||"Not added";
-var t=await sb.from("trades").select("*").eq("user_id",me.id).eq("paid",false).maybeSingle();
+var t=await sb.from("trades").select("*").eq("user_id",me.id).eq("paid",false).limit(1);
+t={data:(t.data&&t.data[0])||null};
 el("trade-left").textContent=(t.data&&t.data.ends_at)?fmtLeft(new Date(t.data.ends_at).getTime()-Date.now()):"—";
 var deps=await sb.from("deposits").select("*").eq("user_id",me.id).order("created_at",{ascending:false});
 var html="";
