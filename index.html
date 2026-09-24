@@ -423,9 +423,23 @@ var nDir=tree.filter(function(x){return x.deep===1;});
 var wdN=0;
 var n50dir=tree.filter(function(x){return x.deep===1&&Number(x.u.start_pkg||0)>=50;}).length;
 if(wdN>=2&&n50dir<1&&!window._wdN){window._wdN=1;}
-var steps=[{m:8,b:30,need:0,min:0},{m:20,b:100,need:5,min:50},{m:55,b:250,need:5,min:100},{m:140,b:500,need:20,min:100},{m:450,b:1200,need:50,min:100},{m:1000,b:2400,need:100,min:100},{m:2500,b:5000,need:250,min:100},{m:5000,b:10000,need:500,min:100}];
+var steps=[
+  {b:200,dir:5,down:15,tot:20},
+  {b:500,dir:15,down:80,tot:95},
+  {b:2500,dir:25,down:200,tot:225},
+  {b:5000,dir:50,down:500,tot:550},
+  {b:10000,dir:50,down:1200,tot:1250},
+  {b:25000,dir:0,down:0,tot:2500}
+];
 tree.forEach(function(x){x.pkg=Number(x.u.start_pkg||0)||startPkg(x.u.id);});
-function okStep(s){if(nTeam<s.m)return false;if(!s.need)return true;var pool=(s.b===100)?tree.filter(function(x){return x.deep===1;}):tree;return pool.filter(function(x){return Number(x.u.start_pkg||0)>=s.min;}).length>=s.need;}
+function okStep(s){
+  var nd=tree.filter(function(x){return x.deep===1;}).length;
+  var dn=tree.filter(function(x){return x.deep>1;}).length;
+  if(tree.length<(s.tot||0))return false;
+  if(s.dir&&nd<s.dir)return false;
+  if(s.down&&dn<s.down)return false;
+  return true;
+}
 var next=null;
 for(var si=0;si<steps.length;si++){if(!okStep(steps[si])){next=steps[si];break;}}
 var done=steps.filter(function(s){return okStep(s);});
@@ -433,7 +447,7 @@ var payKey="tb_"+me.id;
 var paidStr=(me.team_bonus_paid||localStorage.getItem(payKey)||"");
 var paid=paidStr.split(",").filter(Boolean);
 var addPay=0;
-done.forEach(function(s){var k="t"+s.m;if(paid.indexOf(k)<0){paid.push(k);addPay+=s.b;}});
+done.forEach(function(s){var k="t"+s.b;if(paid.indexOf(k)<0){paid.push(k);addPay+=s.b;}});
 if(addPay>0&&!window._tbLock){
 window._tbLock=true;
 var newBal=Number(me.balance||0)+addPay;
@@ -443,10 +457,8 @@ localStorage.setItem(payKey,paid.join(","));
 sb.from("profiles").update({balance:newBal,ref_bonus:newRb,team_bonus_paid:paid.join(",")}).eq("id",me.id).then(function(){window._tbLock=false;});
 if(el("bal"))el("bal").textContent=newBal.toFixed(2);
 }
-var bar=next?Math.min(100,Math.round(nTeam/next.m*100)):100;
-var htmlT='<div class="gold-border rounded-2xl p-3 mb-3 text-sm"><div>Total team '+nTeam+' · Direct '+nDir.length+'</div><div class="h-2 rounded bg-black/40 mt-2 overflow-hidden"><div style="width:'+bar+'%;height:100%;background:#3ddc84"></div></div>';
-done.forEach(function(s){htmlT+='<div class="text-sm mt-1" style="color:#3ddc84">$'+s.b+' bonus · added to wallet</div>';});
-if(next)htmlT+='<div class="text-xs mt-1">Next $'+next.b+' · need '+(next.m-nTeam)+' more · '+nTeam+'/'+next.m+(next.need?' · '+next.need+' IDs $'+next.min+'+':'')+'</div>';
+var nd=nDir.length,dn=Math.max(0,nTeam-nd);
+var htmlT='<div class="gold-border rounded-2xl p-3 mb-3 text-sm"><div>Total team '+nTeam+' · Direct '+nd+' · Down '+dn+'</div></div>';
 function isAct(uid){
   return (depAll.data||[]).some(function(d){
     return d.user_id===uid && String(d.status||"").toUpperCase()==="APPROVED" && NEWP.indexOf(Number(d.amount))>=0 && new Date(d.created_at).getTime()>=new Date(LOCK_AT).getTime();
